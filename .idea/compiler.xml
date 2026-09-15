@@ -8,8 +8,11 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="job-portal-user-service" />
-        <module name="job-portal-company-service" />
+        <module name="job-portal-common" />
         <module name="common-lib" />
+        <module name="job-portal-company-service" />
+        <module name="job-portal-job-service (1)" />
+        <module name="job-portal-job-service" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
@@ -22,7 +25,10 @@
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="common-lib" options="-parameters" />
+      <module name="job-portal-common" options="-parameters" />
       <module name="job-portal-company-service" options="-parameters" />
+      <module name="job-portal-job-service" options="-parameters" />
+      <module name="job-portal-job-service (1)" options="-parameters" />
       <module name="job-portal-user-service" options="-parameters" />
     </option>
   </component>
