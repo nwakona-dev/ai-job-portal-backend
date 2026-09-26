@@ -109,6 +109,16 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
+    public List<JobResponse> getJobsByEmployer(Long employerId) {
+
+        List<Job> jobs = jobRepository.findByEmployerId(employerId);
+
+        return jobs.stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public JobResponse updateJob(Long jobId, Long employerId, JobRequest req) throws Exception {
         Job job = jobRepository.findById(jobId).orElseThrow(
                 () -> new Exception("Job not found with id: ")
@@ -219,4 +229,5 @@ public class JobServiceImpl implements JobService {
             throw new Exception("Unauthorized: Employer does not own this job");
         }
     }
+
 }

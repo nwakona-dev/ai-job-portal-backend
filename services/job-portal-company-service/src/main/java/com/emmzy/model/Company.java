@@ -57,6 +57,7 @@ public class Company {
     @Enumerated(EnumType.STRING)
     private IndustryType industryType;
 
+    @Enumerated(EnumType.STRING)
     private CompanyStatus status;
 
     private boolean isVerified = false;

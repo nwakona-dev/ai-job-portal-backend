@@ -1,0 +1,20 @@
+server:
+  port: 5004
+
+spring:
+  application:
+    name: job-portal-application-service
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/job_portal_application_db
+    username: root
+    password:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true

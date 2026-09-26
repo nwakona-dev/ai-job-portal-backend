@@ -19,7 +19,7 @@ public class AuthController {
 
     private final AuthService authService;
 
-    @PostMapping("/signup")
+    @PostMapping("/signup/user")
     public ResponseEntity<AuthResponse> signup(
             @RequestBody @Valid SignupRequest req
     ) throws Exception{

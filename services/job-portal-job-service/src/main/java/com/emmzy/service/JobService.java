@@ -16,14 +16,28 @@ public interface JobService {
 
     List<JobResponse> getJobsByCompany(Long companyId);
 
-    JobResponse updateJob(Long jobId, Long employerId,  JobRequest req) throws Exception;
+    List<JobResponse> getJobsByEmployer(Long employerId);
 
-    JobResponse publishJob(Long jobId, Long employerId) throws Exception;
+    JobResponse updateJob(
+            Long jobId,
+            Long employerId,
+            JobRequest req
+    ) throws Exception;
 
-    JobResponse closeJob(Long jobId, Long employerId) throws Exception;
+    JobResponse publishJob(
+            Long jobId,
+            Long employerId
+    ) throws Exception;
 
-    void deleteJob(Long jobId, Long employerId) throws Exception;
+    JobResponse closeJob(
+            Long jobId,
+            Long employerId
+    ) throws Exception;
+
+    void deleteJob(
+            Long jobId,
+            Long employerId
+    ) throws Exception;
 
     List<JobResponse> getAllJobsAdmin();
-
 }

@@ -49,6 +49,15 @@ public class JobController {
         return ResponseEntity.ok(jobService.getJobsByCompany(companyId));
     }
 
+    @GetMapping("/employer/{employerId}")
+    public ResponseEntity<List<JobResponse>> getJobsByEmployer(
+            @PathVariable Long employerId) {
+
+        return ResponseEntity.ok(
+                jobService.getJobsByEmployer(employerId)
+        );
+    }
+
     @GetMapping("/admin")
     public ResponseEntity<List<JobResponse>> getAllJobsAdmin() {
         return ResponseEntity.ok(jobService.getAllJobsAdmin());
@@ -83,4 +92,5 @@ public class JobController {
         jobService.deleteJob(id, employerId);
         return ResponseEntity.ok(new ApiResponse( "Job deleted successfully", true));
     }
+
 }

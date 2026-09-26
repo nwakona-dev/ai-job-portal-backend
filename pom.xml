@@ -25,6 +25,7 @@
         <module>cloud</module>
         <module>services</module>
         <module>common-lib</module>
+        <module>services/job-portal-application-service</module>
     </modules>
 
 

@@ -33,6 +33,8 @@ public class User {
 
     private String phone;
 
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
     private String profileImage;
 
     @Enumerated(EnumType.STRING)
