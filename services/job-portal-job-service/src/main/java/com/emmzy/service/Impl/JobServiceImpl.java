@@ -1,5 +1,6 @@
 package com.emmzy.service.Impl;
 
+import com.emmzy.client.CompanyServiceClient;
 import com.emmzy.domain.JobStatus;
 import com.emmzy.dto.CompanyResponse;
 import com.emmzy.dto.JobRequest;
@@ -37,40 +38,64 @@ public class JobServiceImpl implements JobService {
     private final JobCategoryService categoryService;
     private final JobSkillService skillService;
     private final JobTagService tagService;
+    private final CompanyServiceClient companyServiceClient;
 
     @Override
     public JobResponse createJob(Long employerId, JobRequest req) throws Exception {
 
-        JobCategory category = categoryService.getCategoryEntityById(req.getCategoryId());
+        // Get job category
+        JobCategory category =
+                categoryService.getCategoryEntityById(req.getCategoryId());
 
-        Set<JobSkill> skills = req.getSkillIds()!=null?
-                skillService.getSkillByIds(req.getSkillIds())
+        // Get skills
+        Set<JobSkill> skills = req.getSkillIds() != null
+                ? skillService.getSkillByIds(req.getSkillIds())
                 : Collections.emptySet();
 
-        Set<JobTag> tags = req.getTagIds()!=null?
-                tagService.getTagByIds(req.getTagIds())
+        // Get tags
+        Set<JobTag> tags = req.getTagIds() != null
+                ? tagService.getTagByIds(req.getTagIds())
                 : Collections.emptySet();
 
-//todo: fetch company by employer id
+        // Get the company belonging to this employer
+        CompanyResponse company =
+                companyServiceClient.getMyCompany(employerId);
 
-        Long companyId = 1L;
+        // Make sure the employer has a company
+        if (company == null || company.getId() == null) {
+            throw new Exception("Employer does not have a company");
+        }
 
+        // Get the actual company ID
+        Long companyId = company.getId();
+
+        // Create the job
         Job job = Job.builder()
                 .title(req.getTitle())
                 .description(req.getDescription())
                 .requirements(req.getRequirements())
                 .responsibilities(req.getResponsibilities())
                 .benefits(req.getBenefits())
+
+                // Company and employer
                 .companyId(companyId)
                 .employerId(employerId)
+
+                // Category, skills and tags
                 .category(category)
                 .skills(skills)
                 .tags(tags)
+
+                // Location and salary
                 .location(buildLocation(req))
                 .salaryRange(buildSalaryRange(req))
+
+                // Job details
                 .jobType(req.getJobType())
                 .workMode(req.getWorkMode())
                 .experienceLevel(req.getExperienceLevel())
+
+                // Other details
                 .openings(req.getOpenings() != null ? req.getOpenings() : 1)
                 .applicationDeadline(req.getApplicationDeadline())
                 .expiredAt(req.getExpiredAt())
@@ -78,10 +103,12 @@ public class JobServiceImpl implements JobService {
                 .status(JobStatus.DRAFT)
                 .build();
 
+        // Save the job
         Job savedJob = jobRepository.save(job);
+
+        // Return the saved job with company information
         return convertToResponse(savedJob);
     }
-
 
 
     @Override
@@ -190,10 +217,10 @@ public class JobServiceImpl implements JobService {
     }
 
     private JobResponse convertToResponse(Job savedJob) {
-        //todo: fetch company response
-        CompanyResponse companyResponse = CompanyResponse.builder()
-                .id(savedJob.getCompanyId())
-                .build();
+
+        CompanyResponse companyResponse =
+                companyServiceClient.getCompanyById(savedJob.getCompanyId());
+
         return JobMapper.toResponse(savedJob, companyResponse);
     }
 
