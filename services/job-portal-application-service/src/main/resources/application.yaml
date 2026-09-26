@@ -1,0 +1,34 @@
+server:
+  port: 5005
+
+spring:
+  application:
+    name: job-portal-application-service
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/job_portal_application_db
+    username: root
+    password: starboy1
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+
+# Microservice URLs
+job-service:
+  url: http://localhost:5003
+
+resume-service:
+  url: http://localhost:5004
+
+user-service:
+  url: http://localhost:5001
+
+company-service:
+  url: http://localhost:5002
