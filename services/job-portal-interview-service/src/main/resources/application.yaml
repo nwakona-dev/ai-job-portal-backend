@@ -1,0 +1,23 @@
+server:
+  port: 5006
+
+spring:
+  application:
+    name: job-portal-interview-service
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/job_portal_interview_db
+    username: root
+    password: starboy1
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+application-service:
+  url: http://localhost:5005

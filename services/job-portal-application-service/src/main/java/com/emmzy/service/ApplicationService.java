@@ -36,5 +36,4 @@ public interface ApplicationService {
     void deleteApplication(Long applicationId, Long candidateId) throws Exception;
 
     Application getApplicationEntity(Long id) throws Exception;
-
 }

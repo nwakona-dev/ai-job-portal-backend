@@ -14,6 +14,7 @@
         <module name="job-portal-company-service" />
         <module name="job-portal-job-service (1)" />
         <module name="job-portal-application-service" />
+        <module name="job-portal-interview-service" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
@@ -29,6 +30,7 @@
       <module name="common-lib" options="-parameters" />
       <module name="job-portal-application-service" options="-parameters" />
       <module name="job-portal-company-service" options="-parameters" />
+      <module name="job-portal-interview-service" options="-parameters" />
       <module name="job-portal-job-service" options="-parameters" />
       <module name="job-portal-job-service (1)" options="-parameters" />
       <module name="job-portal-resume-service" options="-parameters" />

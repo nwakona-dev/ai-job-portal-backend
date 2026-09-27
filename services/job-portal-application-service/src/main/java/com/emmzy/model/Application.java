@@ -44,6 +44,7 @@ public class Application {
     @Column(nullable = false)
     private ApplicationStatus status = ApplicationStatus.PENDING;
 
+    @Column(columnDefinition = "TEXT")
     private String coverLetter;
 
     private BigDecimal expectedSalary;
