@@ -42,7 +42,7 @@ public class JobRequest {
     @DecimalMin(value = "0.0", inclusive = true, message = "Minimum salary must not be negative")
     private BigDecimal minSalary;
 
-    @DecimalMax(value = "0.0", inclusive = true, message = "Maximum salary must not be negative")
+    @DecimalMin(value = "0.0", inclusive = true, message = "Maximum salary must not be negative")
     private BigDecimal maxSalary;
 
     @NotNull(message = "Job Type is required")
