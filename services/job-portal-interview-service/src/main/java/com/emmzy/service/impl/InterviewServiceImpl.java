@@ -3,19 +3,26 @@ package com.emmzy.service.impl;
 import com.emmzy.client.ApplicationServiceClient;
 import com.emmzy.domain.HiringDecision;
 import com.emmzy.domain.InterviewStatus;
+import com.emmzy.domain.InterviewType;
 import com.emmzy.dto.ApplicationResponse;
 import com.emmzy.dto.CreateInterviewRequest;
 import com.emmzy.dto.HiringDecisionRequest;
 import com.emmzy.dto.InterviewFeedbackRequest;
 import com.emmzy.dto.InterviewResponse;
 import com.emmzy.dto.UpdateInterviewRequest;
-import com.emmzy.domain.ApplicationStatus;
+import com.emmzy.event.InterviewCancelledEvent;
+import com.emmzy.event.InterviewCompletedEvent;
+import com.emmzy.event.InterviewRescheduledEvent;
+import com.emmzy.event.InterviewScheduledEvent;
 import com.emmzy.mapper.InterviewMapper;
 import com.emmzy.model.Interview;
+import com.emmzy.publisher.InterviewEventPublisher;
 import com.emmzy.repository.InterviewRepository;
 import com.emmzy.service.InterviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import com.emmzy.dto.AddMeetingLinkRequest;
+import com.emmzy.event.InterviewMeetingLinkAddedEvent;
 
 import java.util.List;
 import java.util.Objects;
@@ -26,6 +33,7 @@ public class InterviewServiceImpl implements InterviewService {
 
     private final InterviewRepository interviewRepository;
     private final ApplicationServiceClient applicationServiceClient;
+    private final InterviewEventPublisher interviewEventPublisher;
 
     @Override
     public InterviewResponse createInterview(
@@ -40,6 +48,23 @@ public class InterviewServiceImpl implements InterviewService {
 
         if (application == null) {
             throw new Exception("Application not found");
+        }
+
+        if (request.getInterviewType() == InterviewType.ONSITE) {
+
+            if (request.getLocation() == null ||
+                    request.getLocation().isBlank()) {
+
+                throw new Exception(
+                        "Location is required for onsite interviews"
+                );
+            }
+
+            request.setMeetingLink(null);
+
+        } else if (request.getInterviewType() == InterviewType.ONLINE) {
+
+            request.setLocation(null);
         }
 
         if (!Objects.equals(
@@ -90,6 +115,24 @@ public class InterviewServiceImpl implements InterviewService {
                 employerId,
                 "INTERVIEW_SCHEDULED"
         );
+
+        InterviewScheduledEvent event =
+                new InterviewScheduledEvent(
+                        savedInterview.getId(),
+                        savedInterview.getApplicationId(),
+                        savedInterview.getCandidateId(),
+                        savedInterview.getEmployerId(),
+                        savedInterview.getJobId(),
+                        savedInterview.getScheduledDate(),
+                        savedInterview.getScheduledTime(),
+                        savedInterview.getDurationMinutes(),
+                        savedInterview.getInterviewType().name(),
+                        savedInterview.getMeetingLink(),
+                        savedInterview.getLocation(),
+                        savedInterview.getInstructions()
+                );
+
+        interviewEventPublisher.publishInterviewScheduled(event);
 
         return InterviewMapper.toResponse(
                 savedInterview
@@ -172,9 +215,40 @@ public class InterviewServiceImpl implements InterviewService {
                 request.getDurationMinutes()
         );
 
-        interview.setLocation(
-                request.getLocation()
-        );
+        /*
+         * Keep the original interview type.
+         *
+         * ONSITE interviews need a location.
+         * ONLINE interviews need a meeting link.
+         */
+        if (interview.getInterviewType() == InterviewType.ONSITE) {
+
+            if (request.getLocation() == null ||
+                    request.getLocation().isBlank()) {
+
+                throw new Exception(
+                        "Location is required for onsite interviews"
+                );
+            }
+
+            interview.setLocation(
+                    request.getLocation()
+            );
+
+            interview.setMeetingLink(null);
+
+        } else if (interview.getInterviewType() == InterviewType.ONLINE) {
+
+            /*
+             * The meeting link can be empty because
+             * the employer may add it later.
+             */
+            interview.setMeetingLink(
+                    request.getMeetingLink()
+            );
+
+            interview.setLocation(null);
+        }
 
         interview.setInstructions(
                 request.getInstructions()
@@ -187,10 +261,90 @@ public class InterviewServiceImpl implements InterviewService {
         Interview savedInterview =
                 interviewRepository.save(interview);
 
+        InterviewRescheduledEvent event =
+                new InterviewRescheduledEvent(
+                        savedInterview.getId(),
+                        savedInterview.getApplicationId(),
+                        savedInterview.getCandidateId(),
+                        savedInterview.getEmployerId(),
+                        savedInterview.getJobId(),
+                        savedInterview.getScheduledDate(),
+                        savedInterview.getScheduledTime(),
+                        savedInterview.getDurationMinutes(),
+                        savedInterview.getInterviewType().name(),
+                        savedInterview.getMeetingLink(),
+                        savedInterview.getLocation(),
+                        savedInterview.getInstructions()
+                );
+
+        interviewEventPublisher.publishInterviewRescheduled(
+                event
+        );
+
         return InterviewMapper.toResponse(
                 savedInterview
         );
     }
+
+    @Override
+    public InterviewResponse addMeetingLink(
+            Long interviewId,
+            Long employerId,
+            AddMeetingLinkRequest request
+    ) throws Exception {
+
+        Interview interview =
+                getInterviewEntity(interviewId);
+
+        assertEmployer(
+                interview,
+                employerId
+        );
+
+        if (interview.getInterviewType() != InterviewType.ONLINE) {
+            throw new Exception(
+                    "Meeting link can only be added to online interviews"
+            );
+        }
+
+        if (interview.getStatus() == InterviewStatus.CANCELLED) {
+            throw new Exception(
+                    "Cannot add a meeting link to a cancelled interview"
+            );
+        }
+
+        if (interview.getStatus() == InterviewStatus.COMPLETED) {
+            throw new Exception(
+                    "Cannot add a meeting link to a completed interview"
+            );
+        }
+
+        interview.setMeetingLink(
+                request.getMeetingLink()
+        );
+
+        Interview savedInterview =
+                interviewRepository.save(interview);
+
+        InterviewMeetingLinkAddedEvent event =
+                new InterviewMeetingLinkAddedEvent(
+                        savedInterview.getId(),
+                        savedInterview.getApplicationId(),
+                        savedInterview.getCandidateId(),
+                        savedInterview.getEmployerId(),
+                        savedInterview.getJobId(),
+                        savedInterview.getMeetingLink()
+                );
+
+        interviewEventPublisher.publishInterviewMeetingLinkAdded(
+                event
+        );
+
+        return InterviewMapper.toResponse(
+                savedInterview
+        );
+    }
+
 
     @Override
     public InterviewResponse cancelInterview(
@@ -225,6 +379,17 @@ public class InterviewServiceImpl implements InterviewService {
         Interview savedInterview =
                 interviewRepository.save(interview);
 
+        InterviewCancelledEvent event =
+                new InterviewCancelledEvent(
+                        savedInterview.getId(),
+                        savedInterview.getApplicationId(),
+                        savedInterview.getCandidateId(),
+                        savedInterview.getEmployerId(),
+                        savedInterview.getJobId()
+                );
+
+        interviewEventPublisher.publishInterviewCancelled(event);
+
         return InterviewMapper.toResponse(
                 savedInterview
         );
@@ -251,6 +416,12 @@ public class InterviewServiceImpl implements InterviewService {
             );
         }
 
+        if (interview.getStatus() == InterviewStatus.COMPLETED) {
+            throw new Exception(
+                    "Interview has already been completed"
+            );
+        }
+
         interview.setFeedback(
                 request.getFeedback()
         );
@@ -261,6 +432,17 @@ public class InterviewServiceImpl implements InterviewService {
 
         Interview savedInterview =
                 interviewRepository.save(interview);
+
+        InterviewCompletedEvent event =
+                new InterviewCompletedEvent(
+                        savedInterview.getId(),
+                        savedInterview.getApplicationId(),
+                        savedInterview.getCandidateId(),
+                        savedInterview.getEmployerId(),
+                        savedInterview.getJobId()
+                );
+
+        interviewEventPublisher.publishInterviewCompleted(event);
 
         return InterviewMapper.toResponse(
                 savedInterview

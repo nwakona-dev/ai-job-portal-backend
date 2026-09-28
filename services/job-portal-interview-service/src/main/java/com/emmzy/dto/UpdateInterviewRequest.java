@@ -2,7 +2,6 @@ package com.emmzy.dto;
 
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
@@ -27,7 +26,8 @@ public class UpdateInterviewRequest {
     @Min(value = 15, message = "Interview duration must be at least 15 minutes")
     private Integer durationMinutes;
 
-    @NotBlank(message = "Interview location is required")
+    private String meetingLink;
+
     private String location;
 
     private String instructions;
