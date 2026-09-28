@@ -26,6 +26,7 @@ public class InterviewMapper {
                 .scheduledTime(request.getScheduledTime())
                 .durationMinutes(request.getDurationMinutes())
                 .interviewType(request.getInterviewType())
+                .meetingLink(request.getMeetingLink())
                 .location(request.getLocation())
                 .instructions(request.getInstructions())
                 .build();
@@ -45,6 +46,7 @@ public class InterviewMapper {
                 .scheduledTime(interview.getScheduledTime())
                 .durationMinutes(interview.getDurationMinutes())
                 .interviewType(interview.getInterviewType())
+                .meetingLink(interview.getMeetingLink())
                 .location(interview.getLocation())
                 .instructions(interview.getInstructions())
                 .status(interview.getStatus())

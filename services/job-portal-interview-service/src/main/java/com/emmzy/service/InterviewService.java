@@ -1,10 +1,6 @@
 package com.emmzy.service;
 
-import com.emmzy.dto.CreateInterviewRequest;
-import com.emmzy.dto.HiringDecisionRequest;
-import com.emmzy.dto.InterviewFeedbackRequest;
-import com.emmzy.dto.InterviewResponse;
-import com.emmzy.dto.UpdateInterviewRequest;
+import com.emmzy.dto.*;
 
 import java.util.List;
 
@@ -48,5 +44,11 @@ public interface InterviewService {
             Long interviewId,
             Long employerId,
             HiringDecisionRequest request
+    ) throws Exception;
+
+    InterviewResponse addMeetingLink(
+            Long interviewId,
+            Long employerId,
+            AddMeetingLinkRequest request
     ) throws Exception;
 }

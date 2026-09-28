@@ -31,7 +31,8 @@ public class CreateInterviewRequest {
     @NotNull(message = "Interview type is required")
     private InterviewType interviewType;
 
-    @NotBlank(message = "Interview location is required")
+    private String meetingLink;
+
     private String location;
 
     private String instructions;

@@ -50,7 +50,8 @@ public class Interview {
     @Column(nullable = false)
     private InterviewType interviewType;
 
-    @Column(nullable = false)
+    private String meetingLink;
+
     private String location;
 
     @Column(columnDefinition = "TEXT")

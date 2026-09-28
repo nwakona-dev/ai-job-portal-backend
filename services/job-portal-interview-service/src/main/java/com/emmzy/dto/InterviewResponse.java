@@ -34,6 +34,8 @@ public class InterviewResponse {
 
     private InterviewType interviewType;
 
+    private String meetingLink;
+
     private String location;
 
     private String instructions;

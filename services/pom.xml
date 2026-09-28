@@ -26,6 +26,7 @@
         <module>job-portal-resume-service</module>
         <module>job-portal-application-service</module>
         <module>job-portal-interview-service</module>
+        <module>job-portal-notification-service</module>
     </modules>
 
 </project>

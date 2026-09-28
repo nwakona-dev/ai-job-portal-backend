@@ -1,10 +1,6 @@
 package com.emmzy.controller;
 
-import com.emmzy.dto.CreateInterviewRequest;
-import com.emmzy.dto.HiringDecisionRequest;
-import com.emmzy.dto.InterviewFeedbackRequest;
-import com.emmzy.dto.InterviewResponse;
-import com.emmzy.dto.UpdateInterviewRequest;
+import com.emmzy.dto.*;
 import com.emmzy.service.InterviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -127,6 +123,22 @@ public class InterviewController {
 
         return ResponseEntity.ok(
                 interviewService.makeHiringDecision(
+                        id,
+                        employerId,
+                        request
+                )
+        );
+    }
+
+    @PatchMapping("/{id}/meeting-link")
+    public ResponseEntity<InterviewResponse> addMeetingLink(
+            @PathVariable Long id,
+            @RequestHeader("X-User-Id") Long employerId,
+            @Valid @RequestBody AddMeetingLinkRequest request
+    ) throws Exception {
+
+        return ResponseEntity.ok(
+                interviewService.addMeetingLink(
                         id,
                         employerId,
                         request

@@ -2,5 +2,6 @@ package com.emmzy.domain;
 
 public enum InterviewType {
 
-    ONSITE
+    ONSITE,
+    ONLINE
 }
