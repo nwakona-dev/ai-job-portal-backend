@@ -14,10 +14,19 @@ import java.util.Optional;
 public interface CompanyRepository extends JpaRepository<Company, Long> {
 
     Optional<Company> findByOwnerId(Long ownerId);
+
     boolean existsByOwnerId(Long ownerId);
+
     boolean existsByName(String name);
+
     boolean existsBySlug(String slug);
+
     boolean existsByRegistrationNumber(String registrationNumber);
+
+    boolean existsByRegistrationNumberAndIdNot(
+            String registrationNumber,
+            Long id
+    );
 
     @Query(
             "SELECT c FROM Company c WHERE " +

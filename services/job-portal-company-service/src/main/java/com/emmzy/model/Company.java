@@ -36,8 +36,12 @@ public class Company {
 
     private String description;
 
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
     private String logoUrl;
 
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
     private String coverImageUrl;
 
     private String website;

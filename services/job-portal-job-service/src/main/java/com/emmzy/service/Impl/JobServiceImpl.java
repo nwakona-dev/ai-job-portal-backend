@@ -10,11 +10,13 @@ import com.emmzy.model.Job;
 import com.emmzy.model.JobCategory;
 import com.emmzy.model.JobSkill;
 import com.emmzy.model.JobTag;
+import com.emmzy.model.SavedJob;
 import com.emmzy.model.embeddable.JobLocation;
 import com.emmzy.model.embeddable.SalaryRange;
 import com.emmzy.payload.JobSearchRequest;
 import com.emmzy.repository.JobRepository;
 import com.emmzy.repository.JobSpecification;
+import com.emmzy.repository.SavedJobRepository;
 import com.emmzy.service.JobCategoryService;
 import com.emmzy.service.JobService;
 import com.emmzy.service.JobSkillService;
@@ -35,35 +37,62 @@ import java.util.stream.Collectors;
 public class JobServiceImpl implements JobService {
 
     private final JobRepository jobRepository;
+
     private final JobCategoryService categoryService;
+
     private final JobSkillService skillService;
+
     private final JobTagService tagService;
+
     private final CompanyServiceClient companyServiceClient;
 
+    // Saved jobs repository
+    private final SavedJobRepository savedJobRepository;
+
+
+    // =========================================================
+    // CREATE JOB
+    // =========================================================
+
     @Override
-    public JobResponse createJob(Long employerId, JobRequest req) throws Exception {
+    public JobResponse createJob(
+            Long employerId,
+            JobRequest req
+    ) throws Exception {
 
         // Get job category
         JobCategory category =
-                categoryService.getCategoryEntityById(req.getCategoryId());
+                categoryService.getCategoryEntityById(
+                        req.getCategoryId()
+                );
 
         // Get skills
-        Set<JobSkill> skills = req.getSkillIds() != null
-                ? skillService.getSkillByIds(req.getSkillIds())
-                : Collections.emptySet();
+        Set<JobSkill> skills =
+                req.getSkillIds() != null
+                        ? skillService.getSkillByIds(
+                        req.getSkillIds()
+                )
+                        : Collections.emptySet();
 
         // Get tags
-        Set<JobTag> tags = req.getTagIds() != null
-                ? tagService.getTagByIds(req.getTagIds())
-                : Collections.emptySet();
+        Set<JobTag> tags =
+                req.getTagIds() != null
+                        ? tagService.getTagByIds(
+                        req.getTagIds()
+                )
+                        : Collections.emptySet();
 
         // Get the company belonging to this employer
         CompanyResponse company =
-                companyServiceClient.getMyCompany(employerId);
+                companyServiceClient.getMyCompany(
+                        employerId
+                );
 
         // Make sure the employer has a company
         if (company == null || company.getId() == null) {
-            throw new Exception("Employer does not have a company");
+            throw new Exception(
+                    "Employer does not have a company"
+            );
         }
 
         // Get the actual company ID
@@ -96,8 +125,14 @@ public class JobServiceImpl implements JobService {
                 .experienceLevel(req.getExperienceLevel())
 
                 // Other details
-                .openings(req.getOpenings() != null ? req.getOpenings() : 1)
-                .applicationDeadline(req.getApplicationDeadline())
+                .openings(
+                        req.getOpenings() != null
+                                ? req.getOpenings()
+                                : 1
+                )
+                .applicationDeadline(
+                        req.getApplicationDeadline()
+                )
                 .expiredAt(req.getExpiredAt())
                 .active(true)
                 .status(JobStatus.DRAFT)
@@ -111,127 +146,419 @@ public class JobServiceImpl implements JobService {
     }
 
 
+    // =========================================================
+    // GET JOB BY ID
+    // =========================================================
+
     @Override
-    public JobResponse getJobById(Long id) throws Exception {
-        Job job = jobRepository.findById(id).orElseThrow(
-                () -> new Exception("Job not found with id: " + id)
-        );
+    public JobResponse getJobById(Long id)
+            throws Exception {
+
+        Job job = jobRepository.findById(id)
+                .orElseThrow(
+                        () -> new Exception(
+                                "Job not found with id: " + id
+                        )
+                );
+
         return convertToResponse(job);
     }
 
-    @Override
-    public List<JobResponse> getJobs(JobSearchRequest request) {
-        List<Job> jobs = jobRepository.findAll(JobSpecification.build(request));
-        return jobs.stream().map(
-               this::convertToResponse
-        ).collect(Collectors.toList());
-    }
+
+    // =========================================================
+    // GET ALL JOBS
+    // =========================================================
 
     @Override
-    public List<JobResponse> getJobsByCompany(Long companyId) {
-        List<Job> jobs = jobRepository.findByCompanyId(companyId);
-        return jobs.stream().map(
-                this::convertToResponse
-        ).collect(Collectors.toList());
+    public List<JobResponse> getJobs(
+            JobSearchRequest request
+    ) {
+
+        List<Job> jobs =
+                jobRepository.findAll(
+                        JobSpecification.build(request)
+                );
+
+        return jobs.stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
     }
 
+
+    // =========================================================
+    // GET JOBS BY COMPANY
+    // =========================================================
+
     @Override
-    public JobResponse updateJob(Long jobId, Long employerId, JobRequest req) throws Exception {
-        Job job = jobRepository.findById(jobId).orElseThrow(
-                () -> new Exception("Job not found with id: ")
+    public List<JobResponse> getJobsByCompany(
+            Long companyId
+    ) {
+
+        List<Job> jobs =
+                jobRepository.findByCompanyId(
+                        companyId
+                );
+
+        return jobs.stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+    }
+
+
+    // =========================================================
+    // GET JOBS BY EMPLOYER
+    // =========================================================
+
+    @Override
+    public List<JobResponse> getJobsByEmployer(
+            Long employerId
+    ) {
+
+        List<Job> jobs =
+                jobRepository.findByEmployerId(
+                        employerId
+                );
+
+        return jobs.stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+    }
+
+
+    // =========================================================
+    // UPDATE JOB
+    // =========================================================
+
+    @Override
+    public JobResponse updateJob(
+            Long jobId,
+            Long employerId,
+            JobRequest req
+    ) throws Exception {
+
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(
+                        () -> new Exception(
+                                "Job not found with id: " + jobId
+                        )
+                );
+
+        // Make sure this employer owns the job
+        assertEmployer(
+                job,
+                employerId
         );
-        assertEmployer(job,employerId);
 
-        JobCategory category = categoryService.getCategoryEntityById(req.getCategoryId());
+        JobCategory category =
+                categoryService.getCategoryEntityById(
+                        req.getCategoryId()
+                );
 
-        Set<JobSkill> skills = req.getSkillIds()!=null?
-                skillService.getSkillByIds(req.getSkillIds())
-                : Collections.emptySet();
+        Set<JobSkill> skills =
+                req.getSkillIds() != null
+                        ? skillService.getSkillByIds(
+                        req.getSkillIds()
+                )
+                        : Collections.emptySet();
 
-        Set<JobTag> tags = req.getTagIds()!=null?
-                tagService.getTagByIds(req.getTagIds())
-                : Collections.emptySet();
+        Set<JobTag> tags =
+                req.getTagIds() != null
+                        ? tagService.getTagByIds(
+                        req.getTagIds()
+                )
+                        : Collections.emptySet();
 
         job.setTitle(req.getTitle());
         job.setDescription(req.getDescription());
         job.setRequirements(req.getRequirements());
         job.setResponsibilities(req.getResponsibilities());
         job.setBenefits(req.getBenefits());
+
         job.setCategory(category);
         job.setSkills(skills);
         job.setTags(tags);
-        job.setLocation(buildLocation(req));
-        job.setSalaryRange(buildSalaryRange(req));
-        job.setJobType(req.getJobType());
-        job.setWorkMode(req.getWorkMode());
-        job.setExperienceLevel(req.getExperienceLevel());
-        job.setOpenings(req.getOpenings() != null ? req.getOpenings() : job.getOpenings());
-        job.setApplicationDeadline(req.getApplicationDeadline());
-        job.setExpiredAt(req.getExpiredAt());
-        return convertToResponse(jobRepository.save(job));
+
+        job.setLocation(
+                buildLocation(req)
+        );
+
+        job.setSalaryRange(
+                buildSalaryRange(req)
+        );
+
+        job.setJobType(
+                req.getJobType()
+        );
+
+        job.setWorkMode(
+                req.getWorkMode()
+        );
+
+        job.setExperienceLevel(
+                req.getExperienceLevel()
+        );
+
+        job.setOpenings(
+                req.getOpenings() != null
+                        ? req.getOpenings()
+                        : job.getOpenings()
+        );
+
+        job.setApplicationDeadline(
+                req.getApplicationDeadline()
+        );
+
+        job.setExpiredAt(
+                req.getExpiredAt()
+        );
+
+        return convertToResponse(
+                jobRepository.save(job)
+        );
     }
 
+
+    // =========================================================
+    // PUBLISH JOB
+    // =========================================================
+
     @Override
-    public JobResponse publishJob(Long jobId, Long employerId) throws Exception {
-        Job job = jobRepository.findById(jobId).orElseThrow(
-                () -> new Exception("Job not found ")
+    public JobResponse publishJob(
+            Long jobId,
+            Long employerId
+    ) throws Exception {
+
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(
+                        () -> new Exception(
+                                "Job not found"
+                        )
+                );
+
+        // Make sure this employer owns the job
+        assertEmployer(
+                job,
+                employerId
         );
-        assertEmployer(job,employerId);
-        if (job.getStatus() == JobStatus.CLOSED || job.getStatus() == JobStatus.EXPIRED) {
-            throw new Exception("Job is Expired or Closed and cannot be published");
+
+        if (job.getStatus() != JobStatus.DRAFT) {
+            throw new Exception(
+                    "Only draft jobs can be published"
+            );
         }
-        job.setStatus(JobStatus.OPEN);
-        job.setPublishedAt(LocalDateTime.now());
+
+        job.setStatus(
+                JobStatus.OPEN
+        );
+
+        job.setPublishedAt(
+                LocalDateTime.now()
+        );
+
         job.setActive(true);
-        return convertToResponse(jobRepository.save(job));
+
+        return convertToResponse(
+                jobRepository.save(job)
+        );
     }
 
 
-    @Override
-    public JobResponse closeJob(Long jobId, Long employerId) throws Exception {
-        Job job = jobRepository.findById(jobId).orElseThrow(
-                () -> new Exception("Job not found ")
-        );
-        assertEmployer(job,employerId);
+    // =========================================================
+    // CLOSE JOB
+    // =========================================================
 
-        job.setStatus(JobStatus.CLOSED);
-        job.setClosedAt(LocalDateTime.now());
+    @Override
+    public JobResponse closeJob(
+            Long jobId,
+            Long employerId
+    ) throws Exception {
+
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(
+                        () -> new Exception(
+                                "Job not found"
+                        )
+                );
+
+        // Make sure this employer owns the job
+        assertEmployer(
+                job,
+                employerId
+        );
+
+        job.setStatus(
+                JobStatus.CLOSED
+        );
+
+        job.setClosedAt(
+                LocalDateTime.now()
+        );
+
         job.setActive(false);
-        return convertToResponse(jobRepository.save(job));
+
+        return convertToResponse(
+                jobRepository.save(job)
+        );
     }
 
+
+    // =========================================================
+    // DELETE JOB
+    // =========================================================
+
     @Override
-    public void deleteJob(Long jobId, Long employerId) throws Exception {
-        Job job = jobRepository.findById(jobId).orElseThrow(
-                () -> new Exception("Job not found ")
+    public void deleteJob(
+            Long jobId,
+            Long employerId
+    ) throws Exception {
+
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(
+                        () -> new Exception(
+                                "Job not found"
+                        )
+                );
+
+        // Make sure this employer owns the job
+        assertEmployer(
+                job,
+                employerId
         );
-        assertEmployer(job,employerId);
+
         jobRepository.delete(job);
     }
 
+
+    // =========================================================
+    // GET ALL JOBS - ADMIN
+    // =========================================================
+
     @Override
     public List<JobResponse> getAllJobsAdmin() {
-        return jobRepository.findAll().stream().map(
-                this::convertToResponse
-        ).collect(Collectors.toList());
+
+        return jobRepository.findAll()
+                .stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
     }
 
-    private JobResponse convertToResponse(Job savedJob) {
+
+    // =========================================================
+    // SAVE / UNSAVE JOB
+    // =========================================================
+
+    @Override
+    public void toggleSaveJob(
+            Long jobId,
+            Long userId,
+            boolean saved
+    ) throws Exception {
+
+        // First make sure the job exists
+        jobRepository.findById(jobId)
+                .orElseThrow(
+                        () -> new Exception(
+                                "Job not found with id: " + jobId
+                        )
+                );
+
+        // =============================================
+        // SAVE JOB
+        // =============================================
+
+        if (saved) {
+
+            // Check whether this user already saved
+            // this job.
+            boolean alreadySaved =
+                    savedJobRepository
+                            .existsByUserIdAndJobId(
+                                    userId,
+                                    jobId
+                            );
+
+            // Only create a record if one doesn't
+            // already exist.
+            if (!alreadySaved) {
+
+                SavedJob savedJob =
+                        SavedJob.builder()
+                                .userId(userId)
+                                .jobId(jobId)
+                                .build();
+
+                savedJobRepository.save(
+                        savedJob
+                );
+            }
+
+        }
+
+        // =============================================
+        // UNSAVE JOB
+        // =============================================
+
+        else {
+
+            savedJobRepository
+                    .deleteByUserIdAndJobId(
+                            userId,
+                            jobId
+                    );
+        }
+    }
+
+
+    // =========================================================
+    // CONVERT JOB TO RESPONSE
+    // =========================================================
+
+    private JobResponse convertToResponse(
+            Job savedJob
+    ) {
 
         CompanyResponse companyResponse =
-                companyServiceClient.getCompanyById(savedJob.getCompanyId());
+                companyServiceClient.getCompanyById(
+                        savedJob.getCompanyId()
+                );
 
-        return JobMapper.toResponse(savedJob, companyResponse);
+        return JobMapper.toResponse(
+                savedJob,
+                companyResponse
+        );
     }
 
-    private SalaryRange buildSalaryRange(JobRequest req) {
+    @Override
+    public List<Long> getSavedJobIds(Long userId) {
+
+        return savedJobRepository.findByUserId(userId)
+                .stream()
+                .map(SavedJob::getJobId)
+                .toList();
+    }
+    // =========================================================
+    // BUILD SALARY RANGE
+    // =========================================================
+
+    private SalaryRange buildSalaryRange(
+            JobRequest req
+    ) {
+
         return SalaryRange.builder()
                 .minSalary(req.getMinSalary())
                 .maxSalary(req.getMaxSalary())
                 .build();
     }
 
-    private JobLocation buildLocation(JobRequest req) {
+
+    // =========================================================
+    // BUILD LOCATION
+    // =========================================================
+
+    private JobLocation buildLocation(
+            JobRequest req
+    ) {
+
         return JobLocation.builder()
                 .address(req.getAddress())
                 .city(req.getCity())
@@ -241,9 +568,21 @@ public class JobServiceImpl implements JobService {
                 .build();
     }
 
-    private void assertEmployer(Job job, Long employerId) throws Exception {
-        if(!job.getEmployerId().equals(employerId)) {
-            throw new Exception("Unauthorized: Employer does not own this job");
+
+    // =========================================================
+    // CHECK EMPLOYER OWNERSHIP
+    // =========================================================
+
+    private void assertEmployer(
+            Job job,
+            Long employerId
+    ) throws Exception {
+
+        if (!job.getEmployerId().equals(employerId)) {
+
+            throw new Exception(
+                    "Unauthorized: Employer does not own this job"
+            );
         }
     }
 }

@@ -16,6 +16,8 @@ public interface JobService {
 
     List<JobResponse> getJobsByCompany(Long companyId);
 
+    List<JobResponse> getJobsByEmployer(Long employerId);
+
     JobResponse updateJob(Long jobId, Long employerId,  JobRequest req) throws Exception;
 
     JobResponse publishJob(Long jobId, Long employerId) throws Exception;
@@ -23,6 +25,10 @@ public interface JobService {
     JobResponse closeJob(Long jobId, Long employerId) throws Exception;
 
     void deleteJob(Long jobId, Long employerId) throws Exception;
+
+    void toggleSaveJob(Long jobId, Long userId, boolean saved ) throws Exception;
+
+    List<Long> getSavedJobIds(Long userId);
 
     List<JobResponse> getAllJobsAdmin();
 

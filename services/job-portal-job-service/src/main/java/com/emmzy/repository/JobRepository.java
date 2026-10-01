@@ -9,4 +9,6 @@ import java.util.List;
 public interface JobRepository extends JpaRepository<Job,Long>, JpaSpecificationExecutor<Job> {
 
     List<Job> findByCompanyId(Long companyId);
+
+    List<Job> findByEmployerId(Long employerId);
 }

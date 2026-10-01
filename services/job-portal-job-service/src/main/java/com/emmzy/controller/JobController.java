@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/jobs")
@@ -22,7 +23,7 @@ public class JobController {
 
     @PostMapping
     public ResponseEntity<JobResponse> createJob(
-            @RequestHeader ("X-User-Id") Long employerId,
+            @RequestHeader("X-User-Id") Long employerId,
             @RequestBody @Valid JobRequest jobRequest) throws Exception {
 
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -46,12 +47,27 @@ public class JobController {
     @GetMapping("/company/{companyId}")
     public ResponseEntity<List<JobResponse>> getJobsByCompany(
             @PathVariable Long companyId) {
-        return ResponseEntity.ok(jobService.getJobsByCompany(companyId));
+
+        return ResponseEntity.ok(
+                jobService.getJobsByCompany(companyId)
+        );
+    }
+
+    @GetMapping("/employer/{employerId}")
+    public ResponseEntity<List<JobResponse>> getJobsByEmployer(
+            @PathVariable Long employerId) {
+
+        return ResponseEntity.ok(
+                jobService.getJobsByEmployer(employerId)
+        );
     }
 
     @GetMapping("/admin")
     public ResponseEntity<List<JobResponse>> getAllJobsAdmin() {
-        return ResponseEntity.ok(jobService.getAllJobsAdmin());
+
+        return ResponseEntity.ok(
+                jobService.getAllJobsAdmin()
+        );
     }
 
     @PutMapping("/{id}")
@@ -59,28 +75,79 @@ public class JobController {
             @PathVariable Long id,
             @RequestHeader("X-User-Id") Long employerId,
             @RequestBody @Valid JobRequest req) throws Exception {
-        return ResponseEntity.ok(jobService.updateJob(id, employerId, req));
+
+        return ResponseEntity.ok(
+                jobService.updateJob(id, employerId, req)
+        );
     }
 
     @PatchMapping("/{id}/publish")
     public ResponseEntity<JobResponse> publishJob(
             @PathVariable Long id,
             @RequestHeader("X-User-Id") Long employerId) throws Exception {
-        return ResponseEntity.ok(jobService.publishJob(id, employerId));
+
+        return ResponseEntity.ok(
+                jobService.publishJob(id, employerId)
+        );
     }
 
     @PatchMapping("/{id}/close")
     public ResponseEntity<JobResponse> closeJob(
             @PathVariable Long id,
             @RequestHeader("X-User-Id") Long employerId) throws Exception {
-        return ResponseEntity.ok(jobService.closeJob(id, employerId));
+
+        return ResponseEntity.ok(
+                jobService.closeJob(id, employerId)
+        );
+    }
+
+    @PatchMapping("/{id}/save")
+    public ResponseEntity<?> toggleSaveJob(
+            @PathVariable Long id,
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestBody Map<String, Boolean> request) throws Exception {
+
+        Boolean saved = request.get("saved");
+
+        if (saved == null) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of(
+                            "message", "saved field is required"
+                    ));
+        }
+
+        jobService.toggleSaveJob(id, userId, saved);
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "success", true,
+                        "jobId", id,
+                        "saved", saved
+                )
+        );
+    }
+
+    @GetMapping("/saved")
+    public ResponseEntity<List<Long>> getSavedJobIds(
+            @RequestHeader("X-User-Id") Long userId) {
+
+        return ResponseEntity.ok(
+                jobService.getSavedJobIds(userId)
+        );
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse> deleteJob(
             @PathVariable Long id,
             @RequestHeader("X-User-Id") Long employerId) throws Exception {
+
         jobService.deleteJob(id, employerId);
-        return ResponseEntity.ok(new ApiResponse( "Job deleted successfully", true));
+
+        return ResponseEntity.ok(
+                new ApiResponse(
+                        "Job deleted successfully",
+                        true
+                )
+        );
     }
 }
