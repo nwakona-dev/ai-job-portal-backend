@@ -4,19 +4,22 @@ import com.emmzy.domain.ApplicationStatus;
 import com.emmzy.dto.ApplicationResponse;
 import com.emmzy.dto.CompanyResponse;
 import com.emmzy.dto.JobResponse;
+import com.emmzy.dto.ResumeResponse;
 import com.emmzy.dto.response.UserResponse;
 import com.emmzy.model.Application;
 import com.emmzy.payload.CreateApplicationRequest;
 
-import java.util.List;
-
 public class ApplicationMapper {
 
-    public static Application toEntity(CreateApplicationRequest req,
-                                       Long candidateId,
-                                       Long companyId,
-                                       Long employerId) {
-        if(req == null) return null;
+    public static Application toEntity(
+            CreateApplicationRequest req,
+            Long candidateId,
+            Long companyId,
+            Long employerId
+    ) {
+        if (req == null) {
+            return null;
+        }
 
         return Application.builder()
                 .candidateId(candidateId)
@@ -32,12 +35,12 @@ public class ApplicationMapper {
                 .build();
     }
 
-    public static ApplicationResponse toResponse(Application application,
-//                                                 List<ApplicationNote> notes,
-                                                 JobResponse job,
-                                                 CompanyResponse company,
-                                                 UserResponse candidate
-//                                                 ApplicationScreening screening
+    public static ApplicationResponse toResponse(
+            Application application,
+            JobResponse job,
+            CompanyResponse company,
+            UserResponse candidate,
+            ResumeResponse resume
     ) {
         return ApplicationResponse.builder()
                 .id(application.getId())
@@ -46,23 +49,18 @@ public class ApplicationMapper {
                 .job(job)
                 .company(company)
                 .status(application.getStatus())
-
                 .resumeId(application.getResumeId())
+                .resume(resume)
                 .coverLetter(application.getCoverLetter())
-
                 .expectedSalary(application.getExpectedSalary())
-
                 .availableFrom(application.getAvailableFrom())
-
                 .isStarred(application.getIsStarred())
-//                .notes(toNoteResponseList(notes))
                 .aiScore(application.getAiScore())
                 .aiShortListStatus(application.getAiShortListStatus())
                 .withDrawnAt(application.getWithDrawnAt())
                 .withdrawnReason(application.getWithdrawnReason())
                 .appliedAt(application.getAppliedAt())
                 .updatedAt(application.getUpdatedAt())
-//                .screening(toScreeningResponse(screening))
                 .build();
     }
 }

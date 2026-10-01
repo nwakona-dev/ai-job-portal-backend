@@ -51,6 +51,14 @@ public class JobResponse {
     private LocalDate expiredAt;
     private Boolean active;
 
+    /*
+     * User-specific state.
+     *
+     * This is NOT stored on the Job entity because a job can be
+     * saved by one user and not saved by another.
+     */
+    @Builder.Default
+    private Boolean saved = false;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

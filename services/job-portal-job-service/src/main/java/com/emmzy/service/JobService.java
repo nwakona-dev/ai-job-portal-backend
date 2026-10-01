@@ -8,22 +8,68 @@ import java.util.List;
 
 public interface JobService {
 
-    JobResponse createJob(Long employerId, JobRequest req) throws Exception;
+    JobResponse createJob(
+            Long employerId,
+            JobRequest req
+    ) throws Exception;
 
-    JobResponse getJobById(Long jobId) throws Exception;
+    JobResponse getJobById(
+            Long jobId
+    ) throws Exception;
 
-    List<JobResponse> getJobs(JobSearchRequest request);
+    /*
+     * Existing method retained so other backend code does not
+     * immediately break.
+     */
+    List<JobResponse> getJobs(
+            JobSearchRequest request
+    );
 
-    List<JobResponse> getJobsByCompany(Long companyId);
+    /*
+     * User-aware version used by the frontend.
+     */
+    List<JobResponse> getJobs(
+            JobSearchRequest request,
+            Long userId
+    );
 
-    JobResponse updateJob(Long jobId, Long employerId,  JobRequest req) throws Exception;
+    List<JobResponse> getJobsByCompany(
+            Long companyId
+    );
 
-    JobResponse publishJob(Long jobId, Long employerId) throws Exception;
+    List<JobResponse> getJobsByEmployer(
+            Long employerId
+    );
 
-    JobResponse closeJob(Long jobId, Long employerId) throws Exception;
+    JobResponse updateJob(
+            Long jobId,
+            Long employerId,
+            JobRequest req
+    ) throws Exception;
 
-    void deleteJob(Long jobId, Long employerId) throws Exception;
+    JobResponse publishJob(
+            Long jobId,
+            Long employerId
+    ) throws Exception;
+
+    JobResponse closeJob(
+            Long jobId,
+            Long employerId
+    ) throws Exception;
+
+    void deleteJob(
+            Long jobId,
+            Long employerId
+    ) throws Exception;
 
     List<JobResponse> getAllJobsAdmin();
 
+    /*
+     * Save / unsave
+     */
+    boolean toggleSaveJob(
+            Long jobId,
+            Long userId,
+            boolean saved
+    ) throws Exception;
 }

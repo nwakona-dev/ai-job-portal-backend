@@ -38,7 +38,6 @@ public class CompanyResponse {
     private Long ownerId;
 
     private List<SocialLinkResponse> socialLinks;
-;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

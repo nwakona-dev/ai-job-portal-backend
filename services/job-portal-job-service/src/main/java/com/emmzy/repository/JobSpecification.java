@@ -12,63 +12,273 @@ import java.util.List;
 
 public class JobSpecification {
 
-    private JobSpecification() {}
+    private JobSpecification() {
+    }
 
-    public static Specification<Job> build(JobSearchRequest req) {
+    public static Specification<Job> build(
+            JobSearchRequest req
+    ) {
+
         return (root, query, cb) -> {
-            List<Predicate> predicates = new ArrayList<>();
 
-            predicates.add(cb.isTrue(root.get("active")));
+            List<Predicate> predicates =
+                    new ArrayList<>();
 
-            JobStatus status = req.getStatus() != null ? req.getStatus() : JobStatus.OPEN;
-            predicates.add(cb.equal(root.get("status"), status));
+            /*
+             * PUBLIC JOB-SEEKER QUERY
+             *
+             * The /api/jobs endpoint should only expose jobs that
+             * employers have made available to job seekers.
+             *
+             * Do NOT rely on JobSearchRequest.status here.
+             * Spring creates JobSearchRequest through @ModelAttribute,
+             * and a default value inside that DTO could accidentally
+             * filter out OPEN jobs.
+             */
+            predicates.add(
+                    cb.isTrue(
+                            root.get("active")
+                    )
+            );
 
-            if (req.getJobType() != null) {
-                predicates.add(cb.equal(root.get("jobType"), req.getJobType()));
-            }
-            if (req.getWorkMode() != null) {
-                predicates.add(cb.equal(root.get("workMode"), req.getWorkMode()));
-            }
-            if (req.getExperienceLevel() != null) {
-                predicates.add(cb.equal(root.get("experienceLevel"), req.getExperienceLevel()));
-            }
-            if (req.getCompanyId() != null) {
-                predicates.add(cb.equal(root.get("companyId"), req.getCompanyId()));
-            }
-            if (req.getCategoryId() != null) {
-                predicates.add(cb.equal(root.get("category").get("id"), req.getCategoryId()));
-            }
-            if (req.getLocation() != null && !req.getLocation().isBlank()) {
-                String pattern = "%" + req.getLocation().toLowerCase() + "%";
-                Path<String> city = root.get("location").get("city");
-                Path<String> state = root.get("location").get("state");
-                Path<String> country = root.get("location").get("country");
-                predicates.add(cb.or(
-                        cb.like(cb.lower(city), pattern),
-                        cb.like(cb.lower(state), pattern),
-                        cb.like(cb.lower(country), pattern)
-                ));
+            predicates.add(
+                    cb.equal(
+                            root.get("status"),
+                            JobStatus.OPEN
+                    )
+            );
+
+            /*
+             * Keyword search
+             */
+            if (req != null &&
+                    req.getKeyword() != null &&
+                    !req.getKeyword().isBlank()) {
+
+                String pattern =
+                        "%" +
+                                req.getKeyword()
+                                        .trim()
+                                        .toLowerCase() +
+                                "%";
+
+                Predicate titleMatch =
+                        cb.like(
+                                cb.lower(
+                                        root.get("title")
+                                ),
+                                pattern
+                        );
+
+                Predicate descriptionMatch =
+                        cb.like(
+                                cb.lower(
+                                        root.get("description")
+                                ),
+                                pattern
+                        );
+
+                Predicate requirementsMatch =
+                        cb.like(
+                                cb.lower(
+                                        root.get("requirements")
+                                ),
+                                pattern
+                        );
+
+                predicates.add(
+                        cb.or(
+                                titleMatch,
+                                descriptionMatch,
+                                requirementsMatch
+                        )
+                );
             }
 
-            if (req.getMinSalary() != null) {
-                predicates.add(cb.greaterThanOrEqualTo(
-                        root.get("salaryRange").get("minSalary"), req.getMinSalary()));
-            }
-            if (req.getMaxSalary() != null) {
-                predicates.add(cb.lessThanOrEqualTo(
-                        root.get("salaryRange").get("maxSalary"), req.getMaxSalary()));
-            }
-            if (req.getMinOpenings() != null) {
-                predicates.add(cb.greaterThanOrEqualTo(
-                        root.get("openings"), req.getMinOpenings()));
-            }
-            if (req.getMaxOpenings() != null) {
-                predicates.add(cb.lessThanOrEqualTo(
-                        root.get("openings"), req.getMaxOpenings()));
-            }
-            //todo: filter for tags and skills
+            /*
+             * Job type
+             */
+            if (req != null &&
+                    req.getJobType() != null) {
 
-            return cb.and(predicates.toArray(new Predicate[0]));
+                predicates.add(
+                        cb.equal(
+                                root.get("jobType"),
+                                req.getJobType()
+                        )
+                );
+            }
+
+            /*
+             * Work mode
+             */
+            if (req != null &&
+                    req.getWorkMode() != null) {
+
+                predicates.add(
+                        cb.equal(
+                                root.get("workMode"),
+                                req.getWorkMode()
+                        )
+                );
+            }
+
+            /*
+             * Experience level
+             */
+            if (req != null &&
+                    req.getExperienceLevel() != null) {
+
+                predicates.add(
+                        cb.equal(
+                                root.get("experienceLevel"),
+                                req.getExperienceLevel()
+                        )
+                );
+            }
+
+            /*
+             * Company
+             */
+            if (req != null &&
+                    req.getCompanyId() != null) {
+
+                predicates.add(
+                        cb.equal(
+                                root.get("companyId"),
+                                req.getCompanyId()
+                        )
+                );
+            }
+
+            /*
+             * Category
+             */
+            if (req != null &&
+                    req.getCategoryId() != null) {
+
+                predicates.add(
+                        cb.equal(
+                                root
+                                        .get("category")
+                                        .get("id"),
+                                req.getCategoryId()
+                        )
+                );
+            }
+
+            /*
+             * Location
+             */
+            if (req != null &&
+                    req.getLocation() != null &&
+                    !req.getLocation().isBlank()) {
+
+                String pattern =
+                        "%" +
+                                req.getLocation()
+                                        .trim()
+                                        .toLowerCase() +
+                                "%";
+
+                Path<String> city =
+                        root
+                                .get("location")
+                                .get("city");
+
+                Path<String> state =
+                        root
+                                .get("location")
+                                .get("state");
+
+                Path<String> country =
+                        root
+                                .get("location")
+                                .get("country");
+
+                predicates.add(
+                        cb.or(
+                                cb.like(
+                                        cb.lower(city),
+                                        pattern
+                                ),
+                                cb.like(
+                                        cb.lower(state),
+                                        pattern
+                                ),
+                                cb.like(
+                                        cb.lower(country),
+                                        pattern
+                                )
+                        )
+                );
+            }
+
+            /*
+             * Minimum salary
+             */
+            if (req != null &&
+                    req.getMinSalary() != null) {
+
+                predicates.add(
+                        cb.greaterThanOrEqualTo(
+                                root
+                                        .get("salaryRange")
+                                        .get("minSalary"),
+                                req.getMinSalary()
+                        )
+                );
+            }
+
+            /*
+             * Maximum salary
+             */
+            if (req != null &&
+                    req.getMaxSalary() != null) {
+
+                predicates.add(
+                        cb.lessThanOrEqualTo(
+                                root
+                                        .get("salaryRange")
+                                        .get("maxSalary"),
+                                req.getMaxSalary()
+                        )
+                );
+            }
+
+            /*
+             * Minimum openings
+             */
+            if (req != null &&
+                    req.getMinOpenings() != null) {
+
+                predicates.add(
+                        cb.greaterThanOrEqualTo(
+                                root.get("openings"),
+                                req.getMinOpenings()
+                        )
+                );
+            }
+
+            /*
+             * Maximum openings
+             */
+            if (req != null &&
+                    req.getMaxOpenings() != null) {
+
+                predicates.add(
+                        cb.lessThanOrEqualTo(
+                                root.get("openings"),
+                                req.getMaxOpenings()
+                        )
+                );
+            }
+
+            return cb.and(
+                    predicates.toArray(
+                            new Predicate[0]
+                    )
+            );
         };
     }
 }

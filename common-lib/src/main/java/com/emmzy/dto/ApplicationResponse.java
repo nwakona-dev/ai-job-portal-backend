@@ -26,6 +26,8 @@ public class ApplicationResponse {
     private ApplicationStatus status;
 
     private Long resumeId;
+    private ResumeResponse resume;
+
     private String coverLetter;
 
     private BigDecimal expectedSalary;
@@ -34,17 +36,11 @@ public class ApplicationResponse {
     private Boolean isStarred;
 
     private Integer aiScore;
-
     private AiShortListStatus aiShortListStatus;
-
-    //todo
-//    private List<ApplicationNoteResponse> notes;
 
     private LocalDateTime withDrawnAt;
     private String withdrawnReason;
 
     private LocalDateTime appliedAt;
     private LocalDateTime updatedAt;
-    
-//    private ApplicationScreeningResponse screening;
 }

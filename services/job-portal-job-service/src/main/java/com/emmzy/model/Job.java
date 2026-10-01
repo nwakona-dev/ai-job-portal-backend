@@ -28,13 +28,13 @@ public class Job {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @Column( nullable = false)
+    @Column(nullable = false)
     private String title;
 
-    @Column( nullable = false)
+    @Column(nullable = false)
     private String description;
 
-    @Column( nullable = false)
+    @Column(nullable = false)
     private String requirements;
 
     private String responsibilities;
@@ -59,6 +59,7 @@ public class Job {
     @Embedded
     private JobLocation location;
 
+    @Embedded
     private SalaryRange salaryRange;
 
     @Enumerated(EnumType.STRING)
@@ -73,16 +74,31 @@ public class Job {
     @Column(nullable = false)
     private ExperienceLevel experienceLevel;
 
+    /*
+     * Jobs are OPEN by default.
+     *
+     * Builder.Default is important here because Lombok's
+     * @Builder does not use a field initializer unless
+     * @Builder.Default is specified.
+     */
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private JobStatus status = JobStatus.DRAFT;
+    private JobStatus status = JobStatus.OPEN;
 
+    @Builder.Default
+    @Column(nullable = false)
     private Integer openings = 1;
 
     private LocalDate applicationDeadline;
 
     private LocalDate expiredAt;
 
+    /*
+     * A newly created job is active and visible to job seekers.
+     */
+    @Builder.Default
+    @Column(nullable = false)
     private Boolean active = true;
 
     @Column(nullable = false, updatable = false)
@@ -97,4 +113,45 @@ public class Job {
 
     private LocalDateTime closedAt;
 
+    /*
+     * Protect the entity from accidentally being persisted
+     * without the visibility fields populated.
+     */
+    @PrePersist
+    protected void onCreate() {
+
+        if (status == null) {
+            status = JobStatus.OPEN;
+        }
+
+        if (active == null) {
+            active = true;
+        }
+
+        if (openings == null) {
+            openings = 1;
+        }
+
+        if (status == JobStatus.OPEN &&
+                publishedAt == null) {
+
+            publishedAt = LocalDateTime.now();
+        }
+    }
+
+    /*
+     * Protect updates from accidentally turning an OPEN job
+     * into an invisible job because active/status were omitted.
+     */
+    @PreUpdate
+    protected void onUpdate() {
+
+        if (status == null) {
+            status = JobStatus.OPEN;
+        }
+
+        if (active == null) {
+            active = true;
+        }
+    }
 }

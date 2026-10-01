@@ -24,7 +24,7 @@ public class Company {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private long id;
+    private Long id;
 
     @Column(unique = true, nullable = false)
     private String name;
@@ -57,8 +57,10 @@ public class Company {
     @Enumerated(EnumType.STRING)
     private IndustryType industryType;
 
+    @Enumerated(EnumType.STRING)
     private CompanyStatus status;
 
+    @Column(nullable = false)
     private boolean isVerified = false;
 
     @Column(unique = true)
@@ -71,13 +73,14 @@ public class Company {
     @Builder.Default
     private List<SocialLink> socialLinks = new ArrayList<>();
 
+    @Builder.Default
     private Boolean active = true;
 
-    @Column(nullable = false, updatable = false)
     @CreationTimestamp
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(nullable = false)
     @UpdateTimestamp
+    @Column(nullable = false)
     private LocalDateTime updatedAt;
 }
