@@ -2,43 +2,47 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <annotationProcessing>
+      <profile default="true" name="Default" enabled="true" />
       <profile name="Maven default annotation processors profile" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="job-portal-interview-service (1)" />
-        <module name="job-portal-notification-service (1)" />
-        <module name="job-portal-common (1)" />
+        <module name="job-portal-notification-service" />
+        <module name="job-portal-user-service" />
+        <module name="job-portal-common" />
+        <module name="job-portal-job-service" />
+        <module name="job-portal-resume-service" />
         <module name="job-portal-application-service" />
         <module name="job-portal-company-service" />
         <module name="job-portal-interview-service" />
-        <module name="job-portal-notification-service" />
-        <module name="job-portal-common" />
-        <module name="job-portal-application-service (1)" />
-        <module name="job-portal-resume-service" />
-        <module name="job-portal-resume-service (1)" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="job-portal-job-service" target="1.5" />
+      <module name="job-portal-application-service (1)" target="21" />
+      <module name="job-portal-cloud (1)" target="1.5" />
+      <module name="job-portal-common (1)" target="21" />
+      <module name="job-portal-interview-service (1)" target="21" />
       <module name="job-portal-job-service (1)" target="21" />
-      <module name="job-portal-user-service" target="21" />
+      <module name="job-portal-notification-service (1)" target="21" />
+      <module name="job-portal-resume-service (1)" target="21" />
+      <module name="job-portal-service (1)" target="1.5" />
+      <module name="job-portal-system (1)" target="1.5" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
-      <module name="job-portal-application-service" options="" />
+      <module name="job-portal-application-service" options="-parameters" />
       <module name="job-portal-application-service (1)" options="-parameters" />
       <module name="job-portal-common" options="-parameters" />
       <module name="job-portal-common (1)" options="-parameters" />
       <module name="job-portal-company-service" options="-parameters" />
-      <module name="job-portal-interview-service" options="" />
+      <module name="job-portal-interview-service" options="-parameters" />
       <module name="job-portal-interview-service (1)" options="-parameters" />
-      <module name="job-portal-job-service" options="" />
+      <module name="job-portal-job-service" options="-parameters" />
       <module name="job-portal-job-service (1)" options="-parameters" />
-      <module name="job-portal-notification-service" options="" />
+      <module name="job-portal-notification-service" options="-parameters" />
       <module name="job-portal-notification-service (1)" options="-parameters" />
-      <module name="job-portal-resume-service" options="" />
+      <module name="job-portal-resume-service" options="-parameters" />
       <module name="job-portal-resume-service (1)" options="-parameters" />
       <module name="job-portal-user-service" options="-parameters" />
     </option>
