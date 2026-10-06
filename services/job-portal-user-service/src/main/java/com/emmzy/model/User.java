@@ -15,8 +15,11 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Builder
-@Table(name = "users" )
+@Table(name = "users")
 public class User {
+
+    public static final String DEFAULT_PROFILE_IMAGE =
+            "/default-profile.png";
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -39,11 +42,13 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private UserRole role=UserRole.ROLE_JOB_SEEKER;
+    @Builder.Default
+    private UserRole role = UserRole.ROLE_JOB_SEEKER;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private UserStatus status=UserStatus.ACTIVE;
+    @Builder.Default
+    private UserStatus status = UserStatus.ACTIVE;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
@@ -58,4 +63,27 @@ public class User {
     private LocalDateTime suspendedAt;
 
     private LocalDateTime deletedAt;
+
+    // =========================================================
+    // DEFAULT PROFILE IMAGE
+    // =========================================================
+    //
+    // This handles:
+    // - New users
+    // - Existing users created without a profile image
+    // - JPA-created entities
+    //
+    // The user's own image is NEVER overwritten.
+    //
+
+    @PrePersist
+    @PreUpdate
+    private void ensureDefaultProfileImage() {
+
+        if (profileImage == null ||
+                profileImage.trim().isEmpty()) {
+
+            profileImage = DEFAULT_PROFILE_IMAGE;
+        }
+    }
 }
