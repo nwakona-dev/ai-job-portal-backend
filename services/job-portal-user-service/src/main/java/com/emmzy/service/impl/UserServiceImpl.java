@@ -19,8 +19,6 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
 
-
-
     @Override
     public User getUserByEmail(String email) throws Exception {
         User user = userRepository.findByEmail(email);

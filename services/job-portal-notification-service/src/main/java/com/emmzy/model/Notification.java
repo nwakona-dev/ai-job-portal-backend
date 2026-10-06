@@ -30,6 +30,11 @@ public class Notification {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String message;
 
+    private String actionLabel;
+
+    @Column(columnDefinition = "TEXT")
+    private String actionUrl;
+
     @Column(name = "is_read", nullable = false)
     @Builder.Default
     private boolean read = false;

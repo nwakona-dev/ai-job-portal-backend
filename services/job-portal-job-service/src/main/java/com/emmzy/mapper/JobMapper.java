@@ -14,22 +14,32 @@ import java.util.stream.Collectors;
 
 public class JobMapper {
 
-    public static JobResponse toResponse (Job job, CompanyResponse companyResponse) {
+    public static JobResponse toResponse(
+            Job job,
+            CompanyResponse companyResponse
+    ) {
 
         JobLocation loc = job.getLocation();
         SalaryRange sal = job.getSalaryRange();
+        Set<JobSkillResponse> skills =
+                job.getSkills() == null
+                        ? Collections.emptySet()
+                        : job.getSkills()
+                        .stream()
+                        .map(
+                                JobSkillMapper::toJobSkillResponse
+                        )
+                        .collect(Collectors.toSet());
 
-        Set<JobSkillResponse> skills = job.getSkills()==null?
-                Collections.emptySet()
-                :job.getSkills().stream().map(JobSkillMapper::toJobSkillResponse)
-                .collect(Collectors.toSet());
-
-        Set<JobTagResponse> tags = job.getTags()==null?
-                Collections.emptySet()
-                :job.getTags().stream().map(JobTagMapper::toTagResponse)
-                .collect(Collectors.toSet());
-
-
+        Set<JobTagResponse> tags =
+                job.getTags() == null
+                        ? Collections.emptySet()
+                        : job.getTags()
+                        .stream()
+                        .map(
+                                JobTagMapper::toTagResponse
+                        )
+                        .collect(Collectors.toSet());
 
         return JobResponse.builder()
                 .id(job.getId())
@@ -40,29 +50,47 @@ public class JobMapper {
                 .benefits(job.getBenefits())
                 .company(companyResponse)
                 .employerId(job.getEmployerId())
-                .category(JobCategoryMapper.toJobCategoryResponse(job.getCategory(), false))
+                .category(JobCategoryMapper.toJobCategoryResponse(
+                                job.getCategory(),
+                                false))
                 .skills(skills)
                 .tags(tags)
-                .address(loc != null ? loc.getAddress() : null)
-                .city(loc != null ? loc.getCity() : null)
-                .state(loc != null ? loc.getState() : null)
-                .country(loc != null ? loc.getCountry() : null)
-                .zipCode(loc != null ? loc.getZipCode() : null)
+                .address(loc != null
+                                ? loc.getAddress()
+                                : null)
 
-                .minSalary(sal != null ? sal.getMinSalary() : null)
-                .maxSalary(sal != null ? sal.getMaxSalary() : null)
+                .city(loc != null
+                                ? loc.getCity()
+                                : null)
 
+                .state(loc != null
+                                ? loc.getState()
+                                : null)
+
+                .country(loc != null
+                                ? loc.getCountry()
+                                : null)
+
+                .zipCode(loc != null
+                                ? loc.getZipCode()
+                                : null)
+
+                .minSalary(sal != null
+                                ? sal.getMinSalary()
+                                : null)
+
+                .maxSalary(sal != null
+                                ? sal.getMaxSalary()
+                                : null)
                 .jobType(job.getJobType())
                 .workMode(job.getWorkMode())
                 .experienceLevel(job.getExperienceLevel())
                 .status(job.getStatus())
-
-
                 .openings(job.getOpenings())
                 .applicationDeadline(job.getApplicationDeadline())
                 .expiredAt(job.getExpiredAt())
                 .active(job.getActive())
-
+                .deleted(job.getDeleted())
                 .createdAt(job.getCreatedAt())
                 .updatedAt(job.getUpdatedAt())
                 .publishedAt(job.getPublishedAt())

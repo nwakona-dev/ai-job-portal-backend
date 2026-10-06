@@ -28,25 +28,24 @@ public class UserServiceClient {
                         "/api/users/" +
                         userId;
 
-        /*
-         * Get the JWT from the original request
-         * that came from the frontend.
-         *
-         * The frontend sends:
-         *
-         * Authorization: Bearer <JWT>
-         *
-         * We need to forward that same token
-         * to the User Service.
-         */
+//        Get the JWT from the original request
         String authorizationHeader =
                 httpServletRequest.getHeader(
                         HttpHeaders.AUTHORIZATION
                 );
 
+//        Get the current user ID as well
+        String userIdHeader =
+                httpServletRequest.getHeader(
+                        "X-User-Id"
+                );
+
         HttpHeaders headers =
                 new HttpHeaders();
 
+        /*
+         * Forward Authorization header.
+         */
         if (authorizationHeader != null &&
                 !authorizationHeader.isBlank()) {
 
@@ -56,16 +55,33 @@ public class UserServiceClient {
             );
         }
 
-        /*
-         * Create the request entity containing
-         * the forwarded Authorization header.
-         */
+//        Forward X-User-Id header
+        if (userIdHeader != null &&
+                !userIdHeader.isBlank()) {
+
+            headers.set(
+                    "X-User-Id",
+                    userIdHeader
+            );
+        }
+
+//        Create request entity
         HttpEntity<Void> requestEntity =
                 new HttpEntity<>(headers);
 
-        /*
-         * Call the User Service.
-         */
+        System.out.println("[UserServiceClient] Calling User Service");
+        System.out.println("[UserServiceClient] URL: " + url);
+        System.out.println("[UserServiceClient] Authorization: " +
+                        (
+                                authorizationHeader != null
+                                        ? "Present"
+                                        : "Missing"
+                        )
+        );
+
+        System.out.println("[UserServiceClient] X-User-Id: " + userIdHeader);
+
+//        Call User Service
         ResponseEntity<UserResponse> response =
                 restTemplate.exchange(
                         url,
@@ -77,3 +93,4 @@ public class UserServiceClient {
         return response.getBody();
     }
 }
+

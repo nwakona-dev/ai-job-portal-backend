@@ -10,4 +10,6 @@ import lombok.*;
 public class CandidateResponse {
 
     private Long id;
+
+    private String fullName;
 }

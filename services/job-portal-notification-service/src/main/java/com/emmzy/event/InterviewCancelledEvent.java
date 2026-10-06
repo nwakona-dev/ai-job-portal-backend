@@ -10,8 +10,15 @@ import lombok.*;
 public class InterviewCancelledEvent {
 
     private Long interviewId;
+
     private Long applicationId;
+
     private Long candidateId;
+    private String candidateName;
+
     private Long employerId;
+    private String companyName;
+
     private Long jobId;
+    private String jobTitle;
 }

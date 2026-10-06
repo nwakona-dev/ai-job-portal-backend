@@ -6,22 +6,13 @@ import java.util.List;
 
 public interface InterviewService {
 
-    InterviewResponse createInterview(
-            Long employerId,
-            CreateInterviewRequest request
-    ) throws Exception;
+    InterviewResponse createInterview(Long employerId, CreateInterviewRequest request) throws Exception;
 
-    InterviewResponse getInterviewById(
-            Long interviewId
-    ) throws Exception;
+    InterviewResponse getInterviewById(Long interviewId) throws Exception;
 
-    List<InterviewResponse> getCandidateInterviews(
-            Long candidateId
-    );
+    List<InterviewResponse> getCandidateInterviews(Long candidateId);
 
-    List<InterviewResponse> getEmployerInterviews(
-            Long employerId
-    );
+    List<InterviewResponse> getEmployerInterviews(Long employerId);
 
     InterviewResponse updateInterview(
             Long interviewId,
@@ -29,10 +20,7 @@ public interface InterviewService {
             UpdateInterviewRequest request
     ) throws Exception;
 
-    InterviewResponse cancelInterview(
-            Long interviewId,
-            Long employerId
-    ) throws Exception;
+    InterviewResponse cancelInterview(Long interviewId, Long employerId) throws Exception;
 
     InterviewResponse addFeedback(
             Long interviewId,

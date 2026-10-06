@@ -8,18 +8,29 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-public interface NotificationRepository extends JpaRepository<Notification, Long> {
+public interface NotificationRepository
+        extends JpaRepository<Notification, Long> {
 
-    List<Notification> findByRecipientIdOrderByCreatedAtDesc(Long recipientId);
+    List<Notification>
+    findByRecipientIdOrderByCreatedAtDesc(
+            Long recipientId
+    );
 
-    List<Notification> findByRecipientIdAndReadFalseOrderByCreatedAtDesc(Long recipientId);
+
+    List<Notification>
+    findByRecipientIdAndReadFalseOrderByCreatedAtDesc(
+            Long recipientId
+    );
+
 
     @Modifying
     @Query("""
-        UPDATE Notification n
-        SET n.read = true
-        WHERE n.recipientId = :recipientId
-        AND n.read = false
-        """)
-    int markAllAsRead(@Param("recipientId") Long recipientId);
+            UPDATE Notification n
+            SET n.read = true
+            WHERE n.recipientId = :recipientId
+            """)
+    void markAllAsRead(
+            @Param("recipientId") Long recipientId
+    );
 }
+

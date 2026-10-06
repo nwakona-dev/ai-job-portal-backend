@@ -14,10 +14,13 @@ public class InterviewMeetingLinkAddedEvent {
     private Long applicationId;
 
     private Long candidateId;
+    private String candidateName;
 
     private Long employerId;
+    private String companyName;
 
     private Long jobId;
+    private String jobTitle;
 
     private String meetingLink;
 }

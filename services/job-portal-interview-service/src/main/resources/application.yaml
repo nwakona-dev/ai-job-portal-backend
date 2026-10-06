@@ -21,3 +21,6 @@ spring:
 
 application-service:
   url: http://localhost:5005
+
+user-service:
+  url: http://localhost:5001

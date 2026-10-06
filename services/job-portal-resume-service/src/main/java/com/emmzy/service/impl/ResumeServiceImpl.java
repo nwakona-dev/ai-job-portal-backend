@@ -91,14 +91,10 @@ public class ResumeServiceImpl implements ResumeService {
         return buildFullResponse(saved);
     }
 
-    /**
-     * Verify that the candidate exists in User Service
-     * and return the user's information.
-     */
+//    Verify that the candidate exists in User Service and return the user's information.
     private UserResponse validateCandidate(Long candidateId) {
 
-        UserResponse user =
-                userServiceClient.getUserById(candidateId);
+        UserResponse user = userServiceClient.getUserById(candidateId);
 
         if (user == null) {
             throw new IllegalArgumentException(
@@ -116,9 +112,7 @@ public class ResumeServiceImpl implements ResumeService {
     ) throws Exception {
 
         Resume resume = getResumeEntity(resumeId);
-
         assertOwner(resume, candidateId);
-
         return buildFullResponse(resume);
     }
 
@@ -138,65 +132,49 @@ public class ResumeServiceImpl implements ResumeService {
             Long candidateId,
             PersonalInfoResponse req
     ) throws Exception {
-
         Resume resume = getResumeEntity(resumeId);
-
         assertOwner(resume, candidateId);
-
         PersonalInfo info = resume.getPersonalInfo();
 
         if (info == null) {
             info = new PersonalInfo();
         }
-
         if (req.getFirstName() != null) {
             info.setFirstName(req.getFirstName());
         }
-
         if (req.getLastName() != null) {
             info.setLastName(req.getLastName());
         }
-
         if (req.getHeadLine() != null) {
             info.setHeadLine(req.getHeadLine());
         }
-
         if (req.getEmail() != null) {
             info.setEmail(req.getEmail());
         }
-
         if (req.getPhone() != null) {
             info.setPhone(req.getPhone());
         }
-
         if (req.getCity() != null) {
             info.setCity(req.getCity());
         }
-
         if (req.getCountry() != null) {
             info.setCountry(req.getCountry());
         }
-
         if (req.getLinkedinUrl() != null) {
             info.setLinkedinUrl(req.getLinkedinUrl());
         }
-
         if (req.getGithubUrl() != null) {
             info.setGithubUrl(req.getGithubUrl());
         }
-
         if (req.getPortfolioUrl() != null) {
             info.setPortfolioUrl(req.getPortfolioUrl());
         }
-
         if (req.getWebsiteUrl() != null) {
             info.setWebsiteUrl(req.getWebsiteUrl());
         }
 
         resume.setPersonalInfo(info);
-
         Resume updated = resumeRepository.save(resume);
-
         return buildFullResponse(updated);
     }
 
@@ -208,13 +186,10 @@ public class ResumeServiceImpl implements ResumeService {
     ) throws Exception {
 
         Resume resume = getResumeEntity(resumeId);
-
         assertOwner(resume, candidateId);
-
         resume.setSummary(summary);
 
         Resume updated = resumeRepository.save(resume);
-
         return buildFullResponse(updated);
     }
 
@@ -225,7 +200,6 @@ public class ResumeServiceImpl implements ResumeService {
     ) throws Exception {
 
         Resume resume = getResumeEntity(resumeId);
-
         assertOwner(resume, candidateId);
 
         resumeRepository
@@ -236,9 +210,7 @@ public class ResumeServiceImpl implements ResumeService {
                 });
 
         resume.setIsDefault(true);
-
         Resume updated = resumeRepository.save(resume);
-
         return buildFullResponse(updated);
     }
 
@@ -249,9 +221,7 @@ public class ResumeServiceImpl implements ResumeService {
     ) throws Exception {
 
         Resume resume = getResumeEntity(resumeId);
-
         assertOwner(resume, candidateId);
-
         resume.setIsActive(false);
         resume.setIsDefault(false);
 

@@ -23,12 +23,7 @@ public class InterviewController {
             @Valid @RequestBody CreateInterviewRequest request
     ) throws Exception {
 
-        InterviewResponse response =
-                interviewService.createInterview(
-                        employerId,
-                        request
-                );
-
+        InterviewResponse response = interviewService.createInterview(employerId, request);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(response);
@@ -39,9 +34,7 @@ public class InterviewController {
             @PathVariable Long id
     ) throws Exception {
 
-        return ResponseEntity.ok(
-                interviewService.getInterviewById(id)
-        );
+        return ResponseEntity.ok(interviewService.getInterviewById(id));
     }
 
     @GetMapping("/candidate")
@@ -49,23 +42,14 @@ public class InterviewController {
             @RequestHeader("X-User-Id") Long candidateId
     ) {
 
-        return ResponseEntity.ok(
-                interviewService.getCandidateInterviews(
-                        candidateId
-                )
-        );
+        return ResponseEntity.ok(interviewService.getCandidateInterviews(candidateId));
     }
 
     @GetMapping("/employer")
     public ResponseEntity<List<InterviewResponse>> getEmployerInterviews(
             @RequestHeader("X-User-Id") Long employerId
     ) {
-
-        return ResponseEntity.ok(
-                interviewService.getEmployerInterviews(
-                        employerId
-                )
-        );
+        return ResponseEntity.ok(interviewService.getEmployerInterviews(employerId));
     }
 
     @PutMapping("/{id}")
@@ -74,14 +58,7 @@ public class InterviewController {
             @RequestHeader("X-User-Id") Long employerId,
             @Valid @RequestBody UpdateInterviewRequest request
     ) throws Exception {
-
-        return ResponseEntity.ok(
-                interviewService.updateInterview(
-                        id,
-                        employerId,
-                        request
-                )
-        );
+        return ResponseEntity.ok(interviewService.updateInterview(id, employerId, request));
     }
 
     @DeleteMapping("/{id}")
@@ -89,13 +66,8 @@ public class InterviewController {
             @PathVariable Long id,
             @RequestHeader("X-User-Id") Long employerId
     ) throws Exception {
-
         return ResponseEntity.ok(
-                interviewService.cancelInterview(
-                        id,
-                        employerId
-                )
-        );
+                interviewService.cancelInterview(id, employerId));
     }
 
     @PostMapping("/{id}/feedback")
@@ -104,14 +76,7 @@ public class InterviewController {
             @RequestHeader("X-User-Id") Long employerId,
             @Valid @RequestBody InterviewFeedbackRequest request
     ) throws Exception {
-
-        return ResponseEntity.ok(
-                interviewService.addFeedback(
-                        id,
-                        employerId,
-                        request
-                )
-        );
+        return ResponseEntity.ok(interviewService.addFeedback(id, employerId, request));
     }
 
     @PostMapping("/{id}/decision")
@@ -120,14 +85,7 @@ public class InterviewController {
             @RequestHeader("X-User-Id") Long employerId,
             @Valid @RequestBody HiringDecisionRequest request
     ) throws Exception {
-
-        return ResponseEntity.ok(
-                interviewService.makeHiringDecision(
-                        id,
-                        employerId,
-                        request
-                )
-        );
+        return ResponseEntity.ok(interviewService.makeHiringDecision(id, employerId, request));
     }
 
     @PatchMapping("/{id}/meeting-link")
@@ -136,13 +94,6 @@ public class InterviewController {
             @RequestHeader("X-User-Id") Long employerId,
             @Valid @RequestBody AddMeetingLinkRequest request
     ) throws Exception {
-
-        return ResponseEntity.ok(
-                interviewService.addMeetingLink(
-                        id,
-                        employerId,
-                        request
-                )
-        );
+        return ResponseEntity.ok(interviewService.addMeetingLink(id, employerId, request));
     }
 }

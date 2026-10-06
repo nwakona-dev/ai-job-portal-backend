@@ -10,6 +10,7 @@ public class InterviewMapper {
         // Utility class
     }
 
+    // REQUEST -> ENTITY
     public static Interview toEntity(
             CreateInterviewRequest request,
             Long employerId,
@@ -32,9 +33,8 @@ public class InterviewMapper {
                 .build();
     }
 
-    public static InterviewResponse toResponse(
-            Interview interview
-    ) {
+    // ENTITY -> RESPONSE
+    public static InterviewResponse toResponse(Interview interview) {
 
         return InterviewResponse.builder()
                 .id(interview.getId())

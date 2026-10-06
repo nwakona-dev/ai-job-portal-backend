@@ -22,6 +22,8 @@ public class InterviewResponse {
 
     private Long candidateId;
 
+    private String candidateName;
+
     private Long employerId;
 
     private Long jobId;

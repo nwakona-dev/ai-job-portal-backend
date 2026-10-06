@@ -34,78 +34,131 @@ public class RabbitMQConfig {
     public static final String INTERVIEW_MEETING_LINK_ADDED_ROUTING_KEY =
             "interview.meeting-link-added";
 
+    public static final String INTERVIEW_HIRING_DECISION_ROUTING_KEY =
+            "interview.hiring-decision";
+
+//    EXCHANGE
     @Bean
     public TopicExchange jobPortalExchange() {
-        return new TopicExchange(EXCHANGE_NAME);
+
+        return new TopicExchange(
+                EXCHANGE_NAME
+        );
     }
 
+//    QUEUE
     @Bean
     public Queue interviewNotificationQueue() {
-        return new Queue(INTERVIEW_QUEUE, true);
+
+        return new Queue(
+                INTERVIEW_QUEUE,
+                true
+        );
     }
 
+//    INTERVIEW SCHEDULED
     @Bean
     public Binding interviewScheduledBinding(
             Queue interviewNotificationQueue,
             TopicExchange jobPortalExchange
     ) {
+
         return BindingBuilder
                 .bind(interviewNotificationQueue)
                 .to(jobPortalExchange)
-                .with(INTERVIEW_SCHEDULED_ROUTING_KEY);
+                .with(
+                        INTERVIEW_SCHEDULED_ROUTING_KEY
+                );
     }
 
+
+//    INTERVIEW RESCHEDULED
     @Bean
     public Binding interviewRescheduledBinding(
             Queue interviewNotificationQueue,
             TopicExchange jobPortalExchange
     ) {
+
         return BindingBuilder
                 .bind(interviewNotificationQueue)
                 .to(jobPortalExchange)
-                .with(INTERVIEW_RESCHEDULED_ROUTING_KEY);
+                .with(
+                        INTERVIEW_RESCHEDULED_ROUTING_KEY
+                );
     }
 
+//    INTERVIEW CANCELLED
     @Bean
     public Binding interviewCancelledBinding(
             Queue interviewNotificationQueue,
             TopicExchange jobPortalExchange
     ) {
+
         return BindingBuilder
                 .bind(interviewNotificationQueue)
                 .to(jobPortalExchange)
-                .with(INTERVIEW_CANCELLED_ROUTING_KEY);
+                .with(
+                        INTERVIEW_CANCELLED_ROUTING_KEY
+                );
     }
 
+//    INTERVIEW COMPLETED
     @Bean
     public Binding interviewCompletedBinding(
             Queue interviewNotificationQueue,
             TopicExchange jobPortalExchange
     ) {
+
         return BindingBuilder
                 .bind(interviewNotificationQueue)
                 .to(jobPortalExchange)
-                .with(INTERVIEW_COMPLETED_ROUTING_KEY);
+                .with(
+                        INTERVIEW_COMPLETED_ROUTING_KEY
+                );
     }
 
+//    MEETING LINK ADDED
     @Bean
     public Binding interviewMeetingLinkAddedBinding(
             Queue interviewNotificationQueue,
             TopicExchange jobPortalExchange
     ) {
+
         return BindingBuilder
                 .bind(interviewNotificationQueue)
                 .to(jobPortalExchange)
-                .with(INTERVIEW_MEETING_LINK_ADDED_ROUTING_KEY);
+                .with(
+                        INTERVIEW_MEETING_LINK_ADDED_ROUTING_KEY
+                );
     }
 
+//    HIRING DECISION
+    @Bean
+    public Binding interviewHiringDecisionBinding(
+            Queue interviewNotificationQueue,
+            TopicExchange jobPortalExchange
+    ) {
+
+        return BindingBuilder
+                .bind(interviewNotificationQueue)
+                .to(jobPortalExchange)
+                .with(
+                        INTERVIEW_HIRING_DECISION_ROUTING_KEY
+                );
+    }
+
+//    JSON MESSAGE CONVERTER
     @Bean
     public MessageConverter jsonMessageConverter() {
+
         return new JacksonJsonMessageConverter();
     }
 
+//    SIMPLE MESSAGE CONVERTER
     @Bean
     public MessageConverter simpleMessageConverter() {
+
         return new SimpleMessageConverter();
     }
 }
+

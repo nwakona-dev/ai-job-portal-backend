@@ -23,7 +23,9 @@ import java.util.stream.Collectors;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final SecretKey secretKey =
-            Keys.hmacShaKeyFor(JwtConstant.SECRET_KEY.getBytes());
+            Keys.hmacShaKeyFor(
+                    JwtConstant.SECRET_KEY.getBytes()
+            );
 
     @Override
     protected void doFilterInternal(
@@ -35,56 +37,58 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String authorizationHeader =
                 request.getHeader("Authorization");
 
-        // No Authorization header
+//        No JWT supplied.
         if (authorizationHeader == null ||
                 !authorizationHeader.startsWith("Bearer ")) {
+
+            System.out.println(
+                    "[JWT] No valid Authorization header for: "
+                            + request.getRequestURI()
+            );
 
             filterChain.doFilter(request, response);
             return;
         }
 
         try {
-
-            // Remove "Bearer " from the token
+//            Remove "Bearer " from the Authorization header.
             String token =
                     authorizationHeader.substring(7);
 
-            // Validate and decode JWT
-            Claims claims = Jwts.parser()
-                    .verifyWith(secretKey)
-                    .build()
-                    .parseSignedClaims(token)
-                    .getPayload();
+//            Validate and decode JWT.
+            Claims claims =
+                    Jwts.parser()
+                            .verifyWith(secretKey)
+                            .build()
+                            .parseSignedClaims(token)
+                            .getPayload();
 
-            // Read information from JWT
-            String email =
-                    claims.get("email", String.class);
-
-            String authorities =
-                    claims.get("authorities", String.class);
-
-            /*
-             * Convert authorities stored in the JWT into
-             * Spring Security authorities.
-             *
-             * Example:
-             *
-             * ROLE_JOB_SEEKER
-             * ROLE_EMPLOYER
-             * ROLE_ADMIN
-             */
-
+//            Read email from JWT.
+            String email = claims.get("email", String.class);
+//            Read authorities from JWT.
+            String authorities = claims.get("authorities", String.class);
+ //           Read user ID from JWT.
+            Long userId = claims.get("userId", Long.class);
+//            Convert JWT authorities into Spring Security authorities.
             List<SimpleGrantedAuthority> grantedAuthorities =
                     authorities == null ||
                             authorities.isBlank()
                             ? List.of()
-                            : Arrays.stream(authorities.split(","))
+                            : Arrays.stream(
+                                    authorities.split(",")
+                            )
                             .map(String::trim)
-                            .filter(s -> !s.isEmpty())
-                            .map(SimpleGrantedAuthority::new)
-                            .collect(Collectors.toList());
+                            .filter(
+                                    s -> !s.isEmpty()
+                            )
+                            .map(
+                                    SimpleGrantedAuthority::new
+                            )
+                            .collect(
+                                    Collectors.toList()
+                            );
 
-            // Create authenticated user
+//            Create authenticated user.
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
                             email,
@@ -92,21 +96,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             grantedAuthorities
                     );
 
-            // Store authentication in Spring Security
+//            Store authentication in Spring Security context.
             SecurityContextHolder
                     .getContext()
-                    .setAuthentication(authentication);
+                    .setAuthentication(
+                            authentication
+                    );
+
+//            Development logging.
+            System.out.println("[JWT] Authentication successful");
+            System.out.println("[JWT] Email: " + email);
+            System.out.println("[JWT] User ID: " + userId);
+            System.out.println("[JWT] Authorities: " + grantedAuthorities);
 
         } catch (Exception e) {
-
-            /*
-             * Invalid or expired JWT.
-             *
-             * Do not authenticate the request.
-             */
             SecurityContextHolder.clearContext();
+
+            System.err.println("[JWT] Authentication failed");
+            System.err.println("[JWT] Request: " + request.getRequestURI());
+            System.err.println("[JWT] Reason: " + e.getMessage());
         }
 
-        filterChain.doFilter(request, response);
+        filterChain.doFilter(
+                request,
+                response
+        );
     }
 }

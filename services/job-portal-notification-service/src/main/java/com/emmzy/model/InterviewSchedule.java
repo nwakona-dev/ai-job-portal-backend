@@ -29,12 +29,15 @@ public class InterviewSchedule {
 
     @Column(nullable = false)
     private Long candidateId;
+    private String candidateName;
 
     @Column(nullable = false)
     private Long employerId;
+    private String companyName;
 
     @Column(nullable = false)
     private Long jobId;
+    private String jobTitle;
 
     @Column(nullable = false)
     private LocalDate scheduledDate;

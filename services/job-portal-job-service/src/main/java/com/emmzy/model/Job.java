@@ -28,13 +28,13 @@ public class Job {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @Column( nullable = false)
+    @Column(nullable = false)
     private String title;
 
-    @Column( nullable = false)
+    @Column(nullable = false)
     private String description;
 
-    @Column( nullable = false)
+    @Column(nullable = false)
     private String requirements;
 
     private String responsibilities;
@@ -59,6 +59,7 @@ public class Job {
     @Embedded
     private JobLocation location;
 
+    @Embedded
     private SalaryRange salaryRange;
 
     @Enumerated(EnumType.STRING)
@@ -83,7 +84,12 @@ public class Job {
 
     private LocalDate expiredAt;
 
+    @Column(nullable = false)
     private Boolean active = true;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean deleted = false;
 
     @Column(nullable = false, updatable = false)
     @CreationTimestamp
@@ -96,5 +102,4 @@ public class Job {
     private LocalDateTime publishedAt;
 
     private LocalDateTime closedAt;
-
 }

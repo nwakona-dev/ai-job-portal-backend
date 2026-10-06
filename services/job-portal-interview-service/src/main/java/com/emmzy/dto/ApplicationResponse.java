@@ -2,6 +2,9 @@ package com.emmzy.dto;
 
 import lombok.*;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -25,7 +28,7 @@ public class ApplicationResponse {
 
     private String coverLetter;
 
-    private Double expectedSalary;
+    private BigDecimal expectedSalary;
 
-    private String availableFrom;
+    private LocalDate availableFrom;
 }
