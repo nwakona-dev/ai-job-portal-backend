@@ -81,7 +81,13 @@
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-impl</artifactId>
 		</dependency>
-	</dependencies>
+        <dependency>
+            <groupId>com.emmzy</groupId>
+            <artifactId>job-portal-resume-service</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
 
 	<build>
 		<plugins>

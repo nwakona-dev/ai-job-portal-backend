@@ -1,117 +1,132 @@
-spring:
-  application:
-    name: job-portal-ai-service
 
-  profiles:
-    active: dev
+  spring:
+    application:
+      name: job-portal-ai-service
 
-  datasource:
-    url: jdbc:mysql://localhost:3306/job_portal_ai_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
-    username: root
-    password:
+    profiles:
+      active: dev
 
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    datasource:
+      url: jdbc:mysql://localhost:3306/job_portal_ai_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+      username: root
+      password:
 
-  jpa:
-    hibernate:
-      ddl-auto: update
+      driver-class-name: com.mysql.cj.jdbc.Driver
 
-    show-sql: false
-
-    properties:
+    jpa:
       hibernate:
-        format_sql: true
-        dialect: org.hibernate.dialect.MySQLDialect
+        ddl-auto: update
+
+      show-sql: false
+
+      properties:
+        hibernate:
+          format_sql: true
+          dialect: org.hibernate.dialect.MySQLDialect
 
 
-server:
-  port: 5008
+  server:
+    port: 5008
 
-  servlet:
-    context-path: /
-
-
-# ============================================================
-# Microservice URLs
-# ============================================================
-
-services:
-
-  user:
-    url: http://localhost:5001
-
-  company:
-    url: http://localhost:5002
-
-  job:
-    url: http://localhost:5003
-
-  resume:
-    url: http://localhost:5004
-
-  application:
-    url: http://localhost:5006
+    servlet:
+      context-path: /
 
 
-# ============================================================
-# AI Configuration
-# ============================================================
+  # ============================================================
+  # Microservice URLs
+  # ============================================================
 
-ai:
+  services:
 
-  matching:
-    enabled: true
+    user:
+      url: http://localhost:5001
 
-    weights:
+    company:
+      url: http://localhost:5002
 
-      skills: 0.50
+    job:
+      url: http://localhost:5003
 
-      experience: 0.20
+    resume:
+      url: http://localhost:5004
 
-      education: 0.10
-
-      location: 0.10
-
-      job-type: 0.10
-
-
-  recommendations:
-
-    max-results: 20
-
-    minimum-score: 50.0
+    application:
+      url: http://localhost:5005
 
 
-# ============================================================
-# Logging
-# ============================================================
+  # ============================================================
+  # AI Configuration
+  # ============================================================
 
-logging:
+  ai:
 
-  level:
+    matching:
+      enabled: true
 
-    root: INFO
+      weights:
 
-    com.emmzy.ai: DEBUG
+        skills: 0.50
 
-    org.springframework.web: INFO
+        experience: 0.20
 
-    org.hibernate.SQL: WARN
+        education: 0.10
+
+        location: 0.10
+
+        job-type: 0.10
 
 
-# ============================================================
-# Management
-# ============================================================
+    recommendations:
 
-management:
+      max-results: 20
 
-  endpoints:
-    web:
-      exposure:
-        include:
-          - health
-          - info
+      minimum-score: 50.0
 
-  endpoint:
-    health:
-      show-details: always
+
+  # ============================================================
+  # OpenAI Configuration
+  # ============================================================
+
+  openai:
+
+    api-key: ${OPENAI_API_KEY}
+
+    base-url: https://api.openai.com
+
+    model: gpt-5
+
+
+  # ============================================================
+  # Logging
+  # ============================================================
+
+  logging:
+
+    level:
+
+      root: INFO
+
+      com.emmzy.ai: DEBUG
+
+      org.springframework.web: INFO
+
+      org.hibernate.SQL: WARN
+
+
+  # ============================================================
+  # Management
+  # ============================================================
+
+  management:
+
+    endpoints:
+      web:
+        exposure:
+          include:
+            - health
+            - info
+
+    endpoint:
+      health:
+        show-details: always
+

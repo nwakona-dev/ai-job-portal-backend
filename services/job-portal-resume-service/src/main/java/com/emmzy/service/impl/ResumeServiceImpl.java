@@ -15,6 +15,7 @@ import com.emmzy.service.ResumeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -30,6 +31,26 @@ public class ResumeServiceImpl implements ResumeService {
     private final ProjectRepository projectRepository;
 
     private final UserServiceClient userServiceClient;
+
+    @Override
+    public Resume uploadResume(Long userId, MultipartFile file) throws Exception {
+        return null;
+    }
+
+    @Override
+    public List<Resume> getUserResumes(Long userId) {
+        return List.of();
+    }
+
+    @Override
+    public Resume getResume(Long resumeId, Long userId) throws Exception {
+        return null;
+    }
+
+    @Override
+    public byte[] downloadResume(Long resumeId, Long userId) throws Exception {
+        return new byte[0];
+    }
 
     @Override
     public ResumeResponse createResume(

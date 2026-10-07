@@ -37,8 +37,14 @@ public class JobServiceClient {
                     .onStatus(
                             HttpStatusCode::isError,
                             (request, response) -> {
+                                String responseBody = response.getBody()
+                                        .toString();
+
                                 throw new ExternalServiceException(
-                                        "Job Service returned an error while fetching jobs"
+                                        "Job Service returned HTTP "
+                                                + response.getStatusCode().value()
+                                                + " while fetching jobs. Response: "
+                                                + responseBody
                                 );
                             }
                     )
@@ -51,7 +57,9 @@ public class JobServiceClient {
 
         } catch (RestClientException exception) {
             throw new ExternalServiceException(
-                    "Unable to communicate with Job Service",
+                    "Unable to communicate with Job Service at "
+                            + "http://localhost:5003/api/jobs. "
+                            + exception.getMessage(),
                     exception
             );
         }
@@ -69,8 +77,16 @@ public class JobServiceClient {
                     .onStatus(
                             HttpStatusCode::isError,
                             (request, response) -> {
+                                String responseBody = response.getBody()
+                                        .toString();
+
                                 throw new ExternalServiceException(
-                                        "Job Service returned an error while fetching job " + jobId
+                                        "Job Service returned HTTP "
+                                                + response.getStatusCode().value()
+                                                + " while fetching job "
+                                                + jobId
+                                                + ". Response: "
+                                                + responseBody
                                 );
                             }
                     )
@@ -83,7 +99,10 @@ public class JobServiceClient {
 
         } catch (RestClientException exception) {
             throw new ExternalServiceException(
-                    "Unable to retrieve job " + jobId,
+                    "Unable to retrieve job "
+                            + jobId
+                            + " from Job Service. "
+                            + exception.getMessage(),
                     exception
             );
         }
@@ -101,9 +120,16 @@ public class JobServiceClient {
                     .onStatus(
                             HttpStatusCode::isError,
                             (request, response) -> {
+                                String responseBody = response.getBody()
+                                        .toString();
+
                                 throw new ExternalServiceException(
-                                        "Job Service returned an error while fetching jobs for employer "
+                                        "Job Service returned HTTP "
+                                                + response.getStatusCode().value()
+                                                + " while fetching jobs for employer "
                                                 + employerId
+                                                + ". Response: "
+                                                + responseBody
                                 );
                             }
                     )
@@ -116,7 +142,10 @@ public class JobServiceClient {
 
         } catch (RestClientException exception) {
             throw new ExternalServiceException(
-                    "Unable to retrieve jobs for employer " + employerId,
+                    "Unable to retrieve jobs for employer "
+                            + employerId
+                            + " from Job Service. "
+                            + exception.getMessage(),
                     exception
             );
         }
