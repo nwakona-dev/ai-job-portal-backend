@@ -4,10 +4,12 @@ import com.emmzy.client.ApplicationServiceClient;
 import com.emmzy.client.JobServiceClient;
 import com.emmzy.client.UserServiceClient;
 import com.emmzy.dto.request.CandidateRankingRequest;
+import com.emmzy.dto.request.OpenAIChatRequest;
 import com.emmzy.dto.request.JobMatchRequest;
 import com.emmzy.dto.request.ResumeAnalysisRequest;
 import com.emmzy.dto.response.CandidateRankingResponse;
 import com.emmzy.dto.response.CandidateRecommendationResponse;
+import com.emmzy.dto.response.OpenAIChatResponse;
 import com.emmzy.dto.response.JobMatchingResponse;
 import com.emmzy.dto.response.JobRecommendationResponse;
 import com.emmzy.dto.response.ResumeAnalysisResponse;
@@ -15,9 +17,11 @@ import com.emmzy.dto.response.SkillMatchResponse;
 import com.emmzy.model.CandidateData;
 import com.emmzy.model.JobData;
 import com.emmzy.service.AIRecommendationService;
+import com.emmzy.service.OpenAIService;
 import com.emmzy.service.SkillMatchingService;
 import com.emmzy.util.MatchingScoreCalculator;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -31,13 +35,44 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class AIRecommendationServiceImpl
-        implements AIRecommendationService {
+public class AIRecommendationServiceImpl implements AIRecommendationService {
 
     private final JobServiceClient jobServiceClient;
     private final ApplicationServiceClient applicationServiceClient;
     private final UserServiceClient userServiceClient;
     private final SkillMatchingService skillMatchingService;
+    private final OpenAIService openAIService;
+
+    /**
+     * Global AI assistant chat.
+     */
+    @Override
+    public OpenAIChatResponse chat(OpenAIChatRequest request) {
+
+        if (request == null
+                || request.getMessage() == null
+                || request.getMessage().isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "AI message is required."
+            );
+        }
+
+        String message = request.getMessage().trim();
+
+        String response = openAIService.generateResponse(message);
+
+        return OpenAIChatResponse.builder()
+                .success(true)
+                .response(response)
+                .error(null)
+                .build();
+    }
+
+    @Override
+    public @Nullable SkillMatchResponse matchSkills(Long candidateId) {
+        return null;
+    }
 
     @Override
     public List<JobRecommendationResponse> getJobRecommendations(
@@ -466,12 +501,6 @@ public class AIRecommendationServiceImpl
             return Collections.emptyList();
         }
 
-        /*
-         * Candidate retrieval will use the exact response
-         * supplied by ApplicationServiceClient.
-         *
-         * We do not cast Map responses directly to CandidateData.
-         */
         return Collections.emptyList();
     }
 
@@ -589,7 +618,7 @@ public class AIRecommendationServiceImpl
                         value.toString()
                 );
             } catch (NumberFormatException ignored) {
-                // Try the next possible value.
+                // Try the next value.
             }
         }
 
@@ -713,3 +742,4 @@ public class AIRecommendationServiceImpl
                 + ".";
     }
 }
+
