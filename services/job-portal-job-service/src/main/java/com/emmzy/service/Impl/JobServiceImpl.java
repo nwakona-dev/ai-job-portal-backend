@@ -15,7 +15,6 @@ import com.emmzy.model.embeddable.JobLocation;
 import com.emmzy.model.embeddable.SalaryRange;
 import com.emmzy.payload.JobSearchRequest;
 import com.emmzy.repository.JobRepository;
-import com.emmzy.repository.JobSpecification;
 import com.emmzy.repository.SavedJobRepository;
 import com.emmzy.service.JobCategoryService;
 import com.emmzy.service.JobService;
@@ -35,7 +34,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional
 public class JobServiceImpl implements JobService {
-
     private final JobRepository jobRepository;
     private final JobCategoryService categoryService;
     private final JobSkillService skillService;
@@ -55,25 +53,21 @@ public class JobServiceImpl implements JobService {
             );
         }
 
-        // Get job category
         JobCategory category =
                 categoryService.getCategoryEntityById(
                         req.getCategoryId()
                 );
 
-        // Get skills
         Set<JobSkill> skills =
                 req.getSkillIds() != null
                         ? skillService.getSkillByIds(req.getSkillIds())
                         : Collections.emptySet();
 
-        // Get tags
         Set<JobTag> tags =
                 req.getTagIds() != null
                         ? tagService.getTagByIds(req.getTagIds())
                         : Collections.emptySet();
 
-        // Get the company belonging to this employer
         CompanyResponse company =
                 companyServiceClient.getMyCompany(
                         employerId
@@ -89,9 +83,6 @@ public class JobServiceImpl implements JobService {
 
         Long companyId = company.getId();
 
-        /*
-         * New jobs are immediately available to job seekers.
-         */
         LocalDateTime publishedAt =
                 LocalDateTime.now();
 
@@ -101,43 +92,30 @@ public class JobServiceImpl implements JobService {
                 .requirements(req.getRequirements())
                 .responsibilities(req.getResponsibilities())
                 .benefits(req.getBenefits())
-
                 .companyId(companyId)
                 .employerId(employerId)
-
                 .category(category)
                 .skills(skills)
                 .tags(tags)
-
-                .location(
-                        buildLocation(req)
-                )
-                .salaryRange(
-                        buildSalaryRange(req)
-                )
-
+                .location(buildLocation(req))
+                .salaryRange(buildSalaryRange(req))
                 .jobType(req.getJobType())
                 .workMode(req.getWorkMode())
                 .experienceLevel(req.getExperienceLevel())
-
                 .openings(
                         req.getOpenings() != null
                                 ? req.getOpenings()
                                 : 1
                 )
-
                 .applicationDeadline(
                         req.getApplicationDeadline()
                 )
-
                 .expiredAt(
                         req.getExpiredAt()
                 )
-
                 .active(true)
                 .status(JobStatus.OPEN)
                 .publishedAt(publishedAt)
-
                 .build();
 
         Job savedJob =
@@ -163,12 +141,6 @@ public class JobServiceImpl implements JobService {
         return convertToResponse(job);
     }
 
-    /*
-     * Backwards-compatible version.
-     *
-     * If another backend caller uses getJobs(request) without
-     * a user ID, all jobs will simply have saved = false.
-     */
     @Override
     @Transactional(readOnly = true)
     public List<JobResponse> getJobs(
@@ -177,13 +149,6 @@ public class JobServiceImpl implements JobService {
         return getJobs(request, null);
     }
 
-    /*
-     * User-aware job listing.
-     *
-     * This version is used by the frontend and receives the
-     * current user's ID so we can correctly determine which
-     * jobs that specific user has saved.
-     */
     @Override
     @Transactional(readOnly = true)
     public List<JobResponse> getJobs(
@@ -191,21 +156,9 @@ public class JobServiceImpl implements JobService {
             Long userId
     ) {
 
-        /*
-         * IMPORTANT:
-         *
-         * Do not use JobSpecification for the main public job
-         * listing anymore.
-         *
-         * Query the jobs table directly first, then apply the
-         * job-seeker visibility rules in Java.
-         */
         List<Job> allJobs =
                 jobRepository.findAll();
 
-        /*
-         * Only expose jobs that are active and OPEN.
-         */
         List<Job> availableJobs =
                 allJobs.stream()
                         .filter(job ->
@@ -219,9 +172,6 @@ public class JobServiceImpl implements JobService {
                         )
                         .collect(Collectors.toList());
 
-        /*
-         * Apply optional search filters.
-         */
         if (request != null) {
 
             if (request.getKeyword() != null &&
@@ -416,26 +366,68 @@ public class JobServiceImpl implements JobService {
             }
         }
 
-        /*
-         * Convert jobs to responses.
-         */
         List<JobResponse> responses =
                 availableJobs.stream()
                         .map(this::convertToResponse)
                         .collect(Collectors.toList());
 
-        /*
-         * Apply user-specific saved state.
-         *
-         * This happens AFTER filtering so we only query saved
-         * records for jobs that are actually being returned.
-         */
         applySavedStatus(
                 responses,
                 userId
         );
 
         return responses;
+    }
+
+    /*
+     * Returns every job saved by the current user.
+     *
+     * This uses the SavedJob records as the source of truth,
+     * then loads the corresponding Job entities.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<JobResponse> getSavedJobs(
+            Long userId
+    ) {
+
+        if (userId == null) {
+            return Collections.emptyList();
+        }
+
+        List<SavedJob> savedJobs =
+                savedJobRepository.findByUserIdAndJobIdIn(
+                        userId,
+                        jobRepository.findAll()
+                                .stream()
+                                .map(Job::getId)
+                                .filter(id -> id != null)
+                                .collect(Collectors.toList())
+                );
+
+        if (savedJobs.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Long> savedJobIds =
+                savedJobs.stream()
+                        .map(SavedJob::getJobId)
+                        .filter(id -> id != null)
+                        .distinct()
+                        .collect(Collectors.toList());
+
+        if (savedJobIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return jobRepository
+                .findAllById(savedJobIds)
+                .stream()
+                .map(this::convertToResponse)
+                .peek(job ->
+                        job.setSaved(true)
+                )
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -482,15 +474,6 @@ public class JobServiceImpl implements JobService {
                 .collect(Collectors.toList());
     }
 
-    /*
-     * SAVE / UNSAVE JOB
-     *
-     * saved = true
-     *      -> create SavedJob record if it does not exist.
-     *
-     * saved = false
-     *      -> remove SavedJob record.
-     */
     @Override
     public boolean toggleSaveJob(
             Long jobId,
@@ -510,10 +493,6 @@ public class JobServiceImpl implements JobService {
             );
         }
 
-        /*
-         * Make sure the job actually exists before creating
-         * a SavedJob record.
-         */
         if (!jobRepository.existsById(jobId)) {
             throw new Exception(
                     "Job not found with id: " + jobId
@@ -522,12 +501,6 @@ public class JobServiceImpl implements JobService {
 
         if (saved) {
 
-            /*
-             * Prevent duplicate saved-job records.
-             *
-             * This is also protected at the database level by
-             * the unique constraint in SavedJob.
-             */
             if (!savedJobRepository.existsByUserIdAndJobId(
                     userId,
                     jobId
@@ -545,9 +518,6 @@ public class JobServiceImpl implements JobService {
             return true;
         }
 
-        /*
-         * Remove the user's saved record.
-         */
         savedJobRepository.deleteByUserIdAndJobId(
                 userId,
                 jobId
@@ -596,30 +566,14 @@ public class JobServiceImpl implements JobService {
         job.setRequirements(req.getRequirements());
         job.setResponsibilities(req.getResponsibilities());
         job.setBenefits(req.getBenefits());
-
         job.setCategory(category);
         job.setSkills(skills);
         job.setTags(tags);
-
-        job.setLocation(
-                buildLocation(req)
-        );
-
-        job.setSalaryRange(
-                buildSalaryRange(req)
-        );
-
-        job.setJobType(
-                req.getJobType()
-        );
-
-        job.setWorkMode(
-                req.getWorkMode()
-        );
-
-        job.setExperienceLevel(
-                req.getExperienceLevel()
-        );
+        job.setLocation(buildLocation(req));
+        job.setSalaryRange(buildSalaryRange(req));
+        job.setJobType(req.getJobType());
+        job.setWorkMode(req.getWorkMode());
+        job.setExperienceLevel(req.getExperienceLevel());
 
         job.setOpenings(
                 req.getOpenings() != null
@@ -737,38 +691,15 @@ public class JobServiceImpl implements JobService {
                 employerId
         );
 
-        /*
-         * Remove saved-job records first because SavedJob stores
-         * the job ID as a reference.
-         *
-         * This prevents stale saved-job records from remaining
-         * after the job itself is deleted.
-         */
         List<SavedJob> savedJobs =
                 savedJobRepository.findByUserIdAndJobIdIn(
                         null,
                         Collections.singletonList(jobId)
                 );
 
-        /*
-         * The repository does not currently expose deleteByJobId,
-         * so the actual Job deletion remains unchanged here.
-         *
-         * The saved-job records are harmless because the save
-         * endpoint verifies that the job exists.
-         */
-
         jobRepository.delete(job);
     }
 
-    /**
-     * Applies the saved state for the currently authenticated
-     * user to every JobResponse.
-     *
-     * A job is saved only if a SavedJob record exists for:
-     *
-     *     userId + jobId
-     */
     private void applySavedStatus(
             List<JobResponse> jobs,
             Long userId
@@ -780,9 +711,6 @@ public class JobServiceImpl implements JobService {
             return;
         }
 
-        /*
-         * No authenticated user means no saved jobs.
-         */
         if (userId == null) {
 
             jobs.forEach(job ->
@@ -821,10 +749,6 @@ public class JobServiceImpl implements JobService {
         );
     }
 
-    /**
-     * Converts the database entity into the response expected
-     * by the frontend.
-     */
     private JobResponse convertToResponse(
             Job savedJob
     ) {
@@ -845,14 +769,6 @@ public class JobServiceImpl implements JobService {
                         companyResponse
                 );
 
-        /*
-         * JobMapper does not know about the current user's
-         * SavedJob record.
-         *
-         * Therefore the default is false here. The user-aware
-         * getJobs(request, userId) method changes this to true
-         * when appropriate.
-         */
         response.setSaved(false);
 
         return response;
@@ -906,4 +822,6 @@ public class JobServiceImpl implements JobService {
             );
         }
     }
+
+
 }

@@ -33,6 +33,13 @@ public interface JobService {
             Long userId
     );
 
+    /*
+     * Returns all jobs saved by the specified user.
+     */
+    List<JobResponse> getSavedJobs(
+            Long userId
+    );
+
     List<JobResponse> getJobsByCompany(
             Long companyId
     );
@@ -72,4 +79,6 @@ public interface JobService {
             Long userId,
             boolean saved
     ) throws Exception;
+
+
 }

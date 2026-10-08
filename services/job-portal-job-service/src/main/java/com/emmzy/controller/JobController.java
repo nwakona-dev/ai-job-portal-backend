@@ -40,19 +40,33 @@ public class JobController {
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(jobService.createJob(
-                        employerId,
-                        jobRequest
-                ));
+                .body(
+                        jobService.createJob(
+                                employerId,
+                                jobRequest
+                        )
+                );
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<JobResponse> getJobById(
-            @PathVariable Long id
-    ) throws Exception {
+    /*
+     * SAVED JOBS
+     *
+     * GET /api/jobs/saved
+     *
+     * Header:
+     * X-User-Id: <current user id>
+     *
+     * This endpoint MUST be declared separately from
+     * /{id}, otherwise "saved" can be interpreted as
+     * a Long job ID.
+     */
+    @GetMapping("/saved")
+    public ResponseEntity<List<JobResponse>> getSavedJobs(
+            @RequestHeader("X-User-Id") Long userId
+    ) {
 
         return ResponseEntity.ok(
-                jobService.getJobById(id)
+                jobService.getSavedJobs(userId)
         );
     }
 
@@ -66,7 +80,10 @@ public class JobController {
     ) {
 
         return ResponseEntity.ok(
-                jobService.getJobs(req, userId)
+                jobService.getJobs(
+                        req,
+                        userId
+                )
         );
     }
 
@@ -95,6 +112,16 @@ public class JobController {
 
         return ResponseEntity.ok(
                 jobService.getAllJobsAdmin()
+        );
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<JobResponse> getJobById(
+            @PathVariable Long id
+    ) throws Exception {
+
+        return ResponseEntity.ok(
+                jobService.getJobById(id)
         );
     }
 
@@ -162,11 +189,12 @@ public class JobController {
             @RequestBody SaveJobRequest request
     ) throws Exception {
 
-        boolean saved = jobService.toggleSaveJob(
-                id,
-                userId,
-                request.saved()
-        );
+        boolean saved =
+                jobService.toggleSaveJob(
+                        id,
+                        userId,
+                        request.saved()
+                );
 
         return ResponseEntity.ok(
                 new ApiResponse(
@@ -197,12 +225,9 @@ public class JobController {
         );
     }
 
-    /*
-     * Small request DTO kept inside the controller because it is
-     * only needed by this endpoint.
-     */
     public record SaveJobRequest(
             boolean saved
     ) {
     }
+
 }

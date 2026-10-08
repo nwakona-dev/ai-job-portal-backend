@@ -11,7 +11,20 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/notifications")
+@CrossOrigin(
+        origins = "http://localhost:3000",
+        allowedHeaders = "*",
+        methods = {
+                RequestMethod.GET,
+                RequestMethod.POST,
+                RequestMethod.PUT,
+                RequestMethod.PATCH,
+                RequestMethod.DELETE,
+                RequestMethod.OPTIONS
+        }
+)
 public class NotificationController {
+
 
     private final NotificationService notificationService;
 
@@ -21,7 +34,9 @@ public class NotificationController {
     ) {
 
         return ResponseEntity.ok(
-                notificationService.getMyNotifications(recipientId)
+                notificationService.getMyNotifications(
+                        recipientId
+                )
         );
     }
 
@@ -31,7 +46,9 @@ public class NotificationController {
     ) {
 
         return ResponseEntity.ok(
-                notificationService.getUnreadNotifications(recipientId)
+                notificationService.getUnreadNotifications(
+                        recipientId
+                )
         );
     }
 
@@ -41,7 +58,10 @@ public class NotificationController {
             @RequestHeader("X-User-Id") Long recipientId
     ) {
 
-        notificationService.markAsRead(id, recipientId);
+        notificationService.markAsRead(
+                id,
+                recipientId
+        );
 
         return ResponseEntity.ok(
                 "Notification marked as read"
@@ -69,10 +89,14 @@ public class NotificationController {
             @RequestHeader("X-User-Id") Long recipientId
     ) {
 
-        notificationService.markAllAsRead(recipientId);
+        notificationService.markAllAsRead(
+                recipientId
+        );
 
         return ResponseEntity.ok(
                 "All notifications marked as read"
         );
     }
+
+
 }
