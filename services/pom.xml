@@ -27,6 +27,7 @@
         <module>job-portal-application-service</module>
         <module>job-portal-interview-service</module>
         <module>job-portal-notification-service</module>
+        <module>job-portal-ai-service</module>
     </modules>
 
 </project>

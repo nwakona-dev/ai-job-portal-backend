@@ -1,0 +1,98 @@
+server:
+  port: 5008
+
+spring:
+  application:
+    name: job-portal-ai-service
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/job_portal_aiService_db
+    username: root
+    password: starboy1
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+
+# ============================================================
+# Microservice URLs
+# ============================================================
+
+user-service:
+  url: http://localhost:5001
+
+company-service:
+  url: http://localhost:5002
+
+job-service:
+  url: http://localhost:5003
+
+resume-service:
+  url: http://localhost:5004
+
+application-service:
+  url: http://localhost:5005
+
+
+# ============================================================
+# AI Configuration
+# ============================================================
+
+ai:
+  matching:
+    enabled: true
+
+    weights:
+      skills: 0.50
+      experience: 0.20
+      education: 0.10
+      location: 0.10
+      job-type: 0.10
+
+  recommendations:
+    max-results: 20
+    minimum-score: 50.0
+
+
+# ============================================================
+# OpenAI Configuration
+# ============================================================
+
+gemini:
+  api-key: ${GEMINI_API_KEY}
+  model: gemini-3.8-flash
+
+
+# ============================================================
+# Logging
+# ============================================================
+
+logging:
+  level:
+    root: INFO
+    com.emmzy: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: WARN
+
+
+# ============================================================
+# Management
+# ============================================================
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - info
+
+  endpoint:
+    health:
+      show-details: always

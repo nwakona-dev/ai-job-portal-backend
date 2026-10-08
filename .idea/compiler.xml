@@ -11,6 +11,7 @@
         <module name="job-portal-notification-service" />
         <module name="job-portal-job-service" />
         <module name="common-lib" />
+        <module name="job-portal-ai-service" />
         <module name="job-portal-resume-service" />
         <module name="job-portal-company-service" />
         <module name="job-portal-job-service (1)" />
@@ -29,6 +30,7 @@
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="common-lib" options="-parameters" />
+      <module name="job-portal-ai-service" options="-parameters" />
       <module name="job-portal-application-service" options="-parameters" />
       <module name="job-portal-company-service" options="-parameters" />
       <module name="job-portal-interview-service" options="-parameters" />

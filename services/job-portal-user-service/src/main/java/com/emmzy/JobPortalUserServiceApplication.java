@@ -5,8 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 public class JobPortalUserServiceApplication {
-
-	public static void main(String[] args) {
+	public static void main(String[] args)  {
 		SpringApplication.run(JobPortalUserServiceApplication.class, args);
 	}
 
