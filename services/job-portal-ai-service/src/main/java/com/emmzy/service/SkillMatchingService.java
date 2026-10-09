@@ -3,7 +3,6 @@ package com.emmzy.service;
 import com.emmzy.model.CandidateData;
 import com.emmzy.model.JobData;
 import com.emmzy.model.SkillData;
-import com.emmzy.util.MatchingScoreCalculator;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -19,117 +18,70 @@ import java.util.stream.Collectors;
 public class SkillMatchingService {
 
     /*
-     * ============================================================
      * CALCULATE MATCH SCORE
-     * ============================================================
-     *
-     * Calculates a percentage based on how many job skills are
-     * covered by the candidate.
      *
      * Exact matches receive full credit.
-     *
-     * Related skills receive partial credit where a clear
-     * relationship exists.
-     *
-     * ============================================================
+     * Equivalent names receive normalized-match credit.
+     * Known related skills receive partial credit.
      */
 
     public double calculateMatchScore(
             CandidateData candidate,
             JobData job
     ) {
-
         if (candidate == null || job == null) {
             return 0.0;
         }
 
         List<String> candidateSkills =
-                extractSkillNames(
-                        candidate.getSkills()
-                );
+                extractSkillNames(candidate.getSkills());
 
         List<String> jobSkills =
-                extractSkillNames(
-                        job.getSkills()
-                );
+                extractSkillNames(job.getSkills());
 
-        if (candidateSkills.isEmpty()
-                || jobSkills.isEmpty()) {
-
+        if (candidateSkills.isEmpty() || jobSkills.isEmpty()) {
             return 0.0;
         }
 
         double totalScore = 0.0;
 
         for (String jobSkill : jobSkills) {
-
-            double bestMatch =
-                    findBestSkillMatch(
-                            jobSkill,
-                            candidateSkills
-                    );
-
-            totalScore += bestMatch;
+            totalScore += findBestSkillMatch(jobSkill, candidateSkills);
         }
 
-        double score =
-                (totalScore / jobSkills.size())
-                        * 100.0;
+        double score = (totalScore / jobSkills.size()) * 100.0;
 
-        return Math.round(score * 100.0)
-                / 100.0;
+        return Math.round(score * 100.0) / 100.0;
     }
 
     /*
-     * ============================================================
      * GET MATCHING SKILLS
-     * ============================================================
-     *
-     * Returns both exact and strongly related skills.
-     * ============================================================
      */
 
     public List<String> getMatchingSkills(
             CandidateData candidate,
             JobData job
     ) {
-
         if (candidate == null || job == null) {
             return Collections.emptyList();
         }
 
         List<String> candidateSkills =
-                extractSkillNames(
-                        candidate.getSkills()
-                );
+                extractSkillNames(candidate.getSkills());
 
         List<String> jobSkills =
-                extractSkillNames(
-                        job.getSkills()
-                );
+                extractSkillNames(job.getSkills());
 
-        if (candidateSkills.isEmpty()
-                || jobSkills.isEmpty()) {
-
+        if (candidateSkills.isEmpty() || jobSkills.isEmpty()) {
             return Collections.emptyList();
         }
 
-        List<String> matchingSkills =
-                new ArrayList<>();
+        List<String> matchingSkills = new ArrayList<>();
 
         for (String jobSkill : jobSkills) {
+            double score = findBestSkillMatch(jobSkill, candidateSkills);
 
-            double matchScore =
-                    findBestSkillMatch(
-                            jobSkill,
-                            candidateSkills
-                    );
-
-            /*
-             * 0.75+ means the relationship is strong enough
-             * to display as a matching skill.
-             */
-            if (matchScore >= 0.75) {
+            if (score >= 0.75) {
                 matchingSkills.add(jobSkill);
             }
         }
@@ -140,50 +92,33 @@ public class SkillMatchingService {
     }
 
     /*
-     * ============================================================
      * GET MISSING SKILLS
-     * ============================================================
-     *
-     * A skill is considered missing when there is no exact or
-     * strong related candidate skill.
-     * ============================================================
      */
 
     public List<String> getMissingSkills(
             CandidateData candidate,
             JobData job
     ) {
-
         if (candidate == null || job == null) {
             return Collections.emptyList();
         }
 
         List<String> candidateSkills =
-                extractSkillNames(
-                        candidate.getSkills()
-                );
+                extractSkillNames(candidate.getSkills());
 
         List<String> jobSkills =
-                extractSkillNames(
-                        job.getSkills()
-                );
+                extractSkillNames(job.getSkills());
 
         if (jobSkills.isEmpty()) {
             return Collections.emptyList();
         }
 
-        List<String> missingSkills =
-                new ArrayList<>();
+        List<String> missingSkills = new ArrayList<>();
 
         for (String jobSkill : jobSkills) {
+            double score = findBestSkillMatch(jobSkill, candidateSkills);
 
-            double matchScore =
-                    findBestSkillMatch(
-                            jobSkill,
-                            candidateSkills
-                    );
-
-            if (matchScore < 0.75) {
+            if (score < 0.75) {
                 missingSkills.add(jobSkill);
             }
         }
@@ -194,57 +129,33 @@ public class SkillMatchingService {
     }
 
     /*
-     * ============================================================
-     * BEST SKILL MATCH
-     * ============================================================
-     *
-     * Score:
-     *
-     * 1.00 = exact match
-     * 0.90 = normalized match
-     * 0.80 = known equivalent
-     * 0.75 = strong related skill
-     * 0.00 = no meaningful relationship
-     * ============================================================
+     * FIND THE BEST CANDIDATE SKILL FOR A JOB REQUIREMENT
      */
 
     private double findBestSkillMatch(
             String jobSkill,
             List<String> candidateSkills
     ) {
-
         if (jobSkill == null
                 || jobSkill.isBlank()
                 || candidateSkills == null
                 || candidateSkills.isEmpty()) {
-
             return 0.0;
         }
 
         double bestScore = 0.0;
 
-        for (String candidateSkill :
-                candidateSkills) {
-
-            if (candidateSkill == null
-                    || candidateSkill.isBlank()) {
-
+        for (String candidateSkill : candidateSkills) {
+            if (candidateSkill == null || candidateSkill.isBlank()) {
                 continue;
             }
 
-            double score =
-                    compareSkills(
-                            candidateSkill,
-                            jobSkill
-                    );
+            double score = compareSkills(candidateSkill, jobSkill);
 
             if (score > bestScore) {
                 bestScore = score;
             }
 
-            /*
-             * Nothing can beat an exact match.
-             */
             if (bestScore >= 1.0) {
                 return 1.0;
             }
@@ -254,81 +165,37 @@ public class SkillMatchingService {
     }
 
     /*
-     * ============================================================
-     * COMPARE SKILLS
-     * ============================================================
+     * COMPARE TWO SKILLS
+     *
+     * 1.00 = exact or equivalent normalized match
+     * 0.90 = punctuation or formatting variation
+     * 0.80 = known related skill
+     * 0.00 = no meaningful relationship
      */
 
     private double compareSkills(
             String candidateSkill,
             String jobSkill
     ) {
+        String candidate = normalizeSkill(candidateSkill);
+        String required = normalizeSkill(jobSkill);
 
-        String candidate =
-                normalizeSkill(
-                        candidateSkill
-                );
-
-        String required =
-                normalizeSkill(
-                        jobSkill
-                );
-
-        if (candidate.isBlank()
-                || required.isBlank()) {
-
+        if (candidate.isBlank() || required.isBlank()) {
             return 0.0;
         }
-
-        /*
-         * --------------------------------------------------------
-         * Exact match
-         * --------------------------------------------------------
-         */
 
         if (candidate.equals(required)) {
             return 1.0;
         }
 
-        /*
-         * --------------------------------------------------------
-         * Normalized variations.
-         *
-         * Example:
-         *
-         * "Driver's License"
-         * "Drivers License"
-         * --------------------------------------------------------
-         */
+        String normalizedCandidate = removeFormatting(candidate);
+        String normalizedRequired = removeFormatting(required);
 
-        String normalizedCandidate =
-                removePunctuation(
-                        candidate
-                );
-
-        String normalizedRequired =
-                removePunctuation(
-                        required
-                );
-
-        if (normalizedCandidate.equals(
-                normalizedRequired
-        )) {
-
+        if (normalizedCandidate.equals(normalizedRequired)) {
             return 0.90;
         }
 
-        /*
-         * --------------------------------------------------------
-         * Known skill relationships.
-         * --------------------------------------------------------
-         */
-
-        if (areRelatedSkills(
-                candidate,
-                required
-        )) {
-
+        if (areRelatedSkills(candidate, required)) {
             return 0.80;
         }
 
@@ -336,73 +203,98 @@ public class SkillMatchingService {
     }
 
     /*
-     * ============================================================
-     * RELATED SKILLS
-     * ============================================================
+     * NORMALIZE COMMON ALIASES
+     */
+
+    private String normalizeSkill(String skill) {
+        if (skill == null) {
+            return "";
+        }
+
+        String normalized = skill
+                .trim()
+                .toLowerCase(Locale.ROOT)
+                .replaceAll("\\s+", " ");
+
+        return switch (normalized) {
+            case "js", "ecmascript" -> "javascript";
+            case "ts" -> "typescript";
+            case "node", "node js" -> "node.js";
+            case "express" -> "express.js";
+            case "reactjs", "react js" -> "react";
+            case "vuejs", "vue js" -> "vue";
+            case "angularjs", "angular js" -> "angular";
+            case "postgres", "postgres sql" -> "postgresql";
+            case "mongo" -> "mongodb";
+            case "c sharp", "c-sharp" -> "c#";
+            case "c plus plus", "cpp" -> "c++";
+            case "dotnet", "dot net" -> ".net";
+            case "springboot", "spring-boot" -> "spring boot";
+            case "springframework", "spring-framework" -> "spring framework";
+            case "tailwind", "tailwindcss" -> "tailwind css";
+            case "restful api", "rest apis", "restful apis" -> "rest api";
+            case "amazon web services" -> "aws";
+            case "google cloud platform", "gcp" -> "google cloud";
+            case "ms sql", "mssql", "sql server" -> "sql server";
+            case "powerbi" -> "power bi";
+            case "ui ux", "user interface design" -> "ui/ux";
+            case "driver license", "driver's license",
+                 "driving license", "driving licence",
+                 "drivers licence" -> "drivers license";
+            default -> normalized;
+        };
+    }
+
+    /*
+     * REMOVE FORMATTING WITHOUT MAKING DIFFERENT LANGUAGES IDENTICAL.
      *
-     * This intentionally uses conservative relationships.
+     * C++, C#, and .NET retain their meaningful symbols.
+     */
+
+    private String removeFormatting(String value) {
+        if (value == null) {
+            return "";
+        }
+
+        return value
+                .toLowerCase(Locale.ROOT)
+                .replace(" ", "")
+                .replace("-", "")
+                .replace("_", "")
+                .replace(".", "")
+                .replace("/", "");
+    }
+
+    /*
+     * KNOWN RELATED SKILLS
      *
-     * We don't want:
-     *
-     * Java → Python
-     *
-     * to become a match simply because both are programming
-     * languages.
-     *
-     * Instead we define genuinely useful equivalents.
-     * ============================================================
+     * These groups provide partial credit, not full equivalence.
+     * Membership in the same group does not mean two skills are
+     * interchangeable in a real job.
      */
 
     private boolean areRelatedSkills(
             String candidate,
             String required
     ) {
+        Set<String> candidateGroup = getSkillGroup(candidate);
+        Set<String> requiredGroup = getSkillGroup(required);
 
-        Set<String> candidateGroup =
-                getSkillGroup(candidate);
-
-        Set<String> requiredGroup =
-                getSkillGroup(required);
-
-        if (candidateGroup.isEmpty()
-                || requiredGroup.isEmpty()) {
-
+        if (candidateGroup.isEmpty() || requiredGroup.isEmpty()) {
             return false;
         }
 
-        return !Collections.disjoint(
-                candidateGroup,
-                requiredGroup
-        );
+        return !Collections.disjoint(candidateGroup, requiredGroup);
     }
 
-    /*
-     * ============================================================
-     * SKILL GROUPS
-     * ============================================================
-     */
+    private Set<String> getSkillGroup(String skill) {
+        Set<String> groups = new LinkedHashSet<>();
 
-    private Set<String> getSkillGroup(
-            String skill
-    ) {
-
-        Set<String> group =
-                new LinkedHashSet<>();
-
-        if (skill == null
-                || skill.isBlank()) {
-
-            return group;
+        if (skill == null || skill.isBlank()) {
+            return groups;
         }
 
         switch (skill) {
-
-            /*
-             * ----------------------------------------------------
-             * Java ecosystem
-             * ----------------------------------------------------
-             */
-
             case "java",
                  "spring",
                  "spring boot",
@@ -410,222 +302,96 @@ public class SkillMatchingService {
                  "jpa",
                  "hibernate",
                  "maven",
-                 "gradle":
-
-                group.add("java");
-                break;
-
-            /*
-             * ----------------------------------------------------
-             * JavaScript ecosystem
-             * ----------------------------------------------------
-             */
+                 "gradle" ->
+                    groups.add("java-ecosystem");
 
             case "javascript",
                  "typescript",
                  "react",
                  "react native",
                  "node.js",
-                 "node",
-                 "express.js",
-                 "express":
-
-                group.add("javascript");
-                break;
-
-            /*
-             * ----------------------------------------------------
-             * Python ecosystem
-             * ----------------------------------------------------
-             */
+                 "express.js" ->
+                    groups.add("javascript-ecosystem");
 
             case "python",
                  "django",
-                 "flask":
-
-                group.add("python");
-                break;
-
-            /*
-             * ----------------------------------------------------
-             * Database ecosystem
-             * ----------------------------------------------------
-             */
+                 "flask" ->
+                    groups.add("python-ecosystem");
 
             case "sql",
                  "mysql",
                  "postgresql",
-                 "mongodb",
-                 "redis":
+                 "sql server" ->
+                    groups.add("relational-database");
 
-                group.add("database");
-                break;
-
-            /*
-             * ----------------------------------------------------
-             * Cloud
-             * ----------------------------------------------------
-             */
+            case "mongodb",
+                 "redis" ->
+                    groups.add("nosql-database");
 
             case "aws",
                  "azure",
-                 "google cloud":
-
-                group.add("cloud");
-                break;
-
-            /*
-             * ----------------------------------------------------
-             * DevOps
-             * ----------------------------------------------------
-             */
+                 "google cloud" ->
+                    groups.add("cloud-platform");
 
             case "docker",
                  "kubernetes",
-                 "jenkins":
-
-                group.add("devops");
-                break;
-
-            /*
-             * ----------------------------------------------------
-             * Frontend
-             * ----------------------------------------------------
-             */
+                 "jenkins" ->
+                    groups.add("devops");
 
             case "html",
                  "css",
                  "bootstrap",
-                 "tailwind css":
-
-                group.add("frontend");
-                break;
-
-            /*
-             * ----------------------------------------------------
-             * Version control
-             * ----------------------------------------------------
-             */
+                 "tailwind css" ->
+                    groups.add("frontend");
 
             case "git",
-                 "github":
+                 "github" ->
+                    groups.add("version-control");
 
-                group.add("version-control");
-                break;
-
-            /*
-             * ----------------------------------------------------
-             * Testing
-             * ----------------------------------------------------
-             */
-
-            case "selenium":
-
-                group.add("testing");
-                break;
-
-            /*
-             * ----------------------------------------------------
-             * Data / analytics
-             * ----------------------------------------------------
-             */
+            case "selenium" ->
+                    groups.add("testing");
 
             case "data analysis",
                  "power bi",
                  "tableau",
-                 "excel":
-
-                group.add("data-analytics");
-                break;
-
-            /*
-             * ----------------------------------------------------
-             * Driving
-             * ----------------------------------------------------
-             */
+                 "excel" ->
+                    groups.add("data-analytics");
 
             case "driving",
-                 "drivers license",
-                 "driver license",
-                 "driver's license":
+                 "drivers license" ->
+                    groups.add("driving");
 
-                group.add("driving");
-                break;
-
-            default:
-                break;
+            default -> {
+                // Unknown skills are compared by exact or normalized name.
+            }
         }
 
-        return group;
+        return groups;
     }
 
     /*
-     * ============================================================
-     * NORMALIZE SKILL
-     * ============================================================
+     * EXTRACT CLEAN SKILL NAMES
      */
 
-    private String normalizeSkill(
-            String skill
-    ) {
-
-        if (skill == null) {
-            return "";
-        }
-
-        return skill
-                .trim()
-                .toLowerCase(Locale.ROOT)
-                .replaceAll("\\s+", " ");
-    }
-
-    /*
-     * ============================================================
-     * REMOVE PUNCTUATION
-     * ============================================================
-     */
-
-    private String removePunctuation(
-            String value
-    ) {
-
-        if (value == null) {
-            return "";
-        }
-
-        return value
-                .replaceAll(
-                        "[^a-z0-9 ]",
-                        ""
-                )
-                .replaceAll(
-                        "\\s+",
-                        " "
-                )
-                .trim();
-    }
-
-    /*
-     * ============================================================
-     * EXTRACT SKILL NAMES
-     * ============================================================
-     */
-
-    private List<String> extractSkillNames(
-            List<SkillData> skills
-    ) {
-
-        if (skills == null) {
+    private List<String> extractSkillNames(List<SkillData> skills) {
+        if (skills == null || skills.isEmpty()) {
             return Collections.emptyList();
         }
 
-        return skills.stream()
-                .filter(Objects::nonNull)
-                .map(SkillData::getName)
-                .filter(Objects::nonNull)
-                .map(String::trim)
-                .filter(skill -> !skill.isBlank())
-                .distinct()
-                .collect(Collectors.toList());
+        Set<String> uniqueSkills = new LinkedHashSet<>();
+
+        for (SkillData skill : skills) {
+            if (skill == null || skill.getName() == null) {
+                continue;
+            }
+
+            String name = skill.getName().trim();
+
+            if (!name.isBlank()) {
+                uniqueSkills.add(name);
+            }
+        }
+
+        return new ArrayList<>(uniqueSkills);
     }
 }

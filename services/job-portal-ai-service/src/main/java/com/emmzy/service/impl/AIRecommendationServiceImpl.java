@@ -49,85 +49,32 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
     private final SkillMatchingService skillMatchingService;
     private final OpenAIService openAIService;
 
-    /*
-     * ============================================================
-     * RECOGNIZED SKILLS
-     * ============================================================
-     */
-
     private static final List<String> RECOGNIZED_SKILLS = List.of(
-            "Spring Boot",
-            "Spring Framework",
-            "React Native",
-            "Node.js",
-            "Express.js",
-            "Tailwind CSS",
-            "REST API",
-            "Machine Learning",
-            "Deep Learning",
-            "Data Analysis",
-            "Power BI",
-            "UI/UX",
-            "Drivers License",
-            "JavaScript",
-            "TypeScript",
-            "Java",
-            "Spring",
-            "React",
-            "Angular",
-            "Vue",
-            "Python",
-            "Django",
-            "Flask",
-            "C++",
-            "C#",
-            ".NET",
-            "PHP",
-            "Laravel",
-            "Go",
-            "Rust",
-            "Kotlin",
-            "Swift",
-            "Flutter",
-            "SQL",
-            "MySQL",
-            "PostgreSQL",
-            "MongoDB",
-            "Redis",
-            "Docker",
-            "Kubernetes",
-            "Git",
-            "GitHub",
-            "HTML",
-            "CSS",
-            "Bootstrap",
-            "AWS",
-            "Azure",
-            "Google Cloud",
-            "Linux",
-            "Figma",
-            "GraphQL",
-            "Jenkins",
-            "Maven",
-            "Gradle",
-            "JPA",
-            "Hibernate",
-            "Microservices",
-            "Selenium",
-            "Tableau",
-            "Excel",
-            "Driving"
+            "Spring Boot", "Spring Framework", "React Native",
+            "Node.js", "Express.js", "Tailwind CSS", "REST API",
+            "Machine Learning", "Deep Learning", "Data Analysis",
+            "Power BI", "UI/UX", "Drivers License", "JavaScript",
+            "TypeScript", "Java", "Spring", "React", "Angular",
+            "Vue", "Python", "Django", "Flask", "C++", "C#",
+            ".NET", "PHP", "Laravel", "Go", "Rust", "Kotlin",
+            "Swift", "Flutter", "SQL", "MySQL", "PostgreSQL",
+            "MongoDB", "Redis", "Docker", "Kubernetes", "Git",
+            "GitHub", "HTML", "CSS", "Bootstrap", "AWS", "Azure",
+            "Google Cloud", "Linux", "Figma", "GraphQL", "Jenkins",
+            "Maven", "Gradle", "JPA", "Hibernate", "Microservices",
+            "Selenium", "Tableau", "Excel", "Driving"
+    );
+
+    private static final List<String> RESPONSE_WRAPPER_KEYS = List.of(
+            "data", "result", "job", "user", "candidate", "resume"
     );
 
     /*
-     * ============================================================
      * CHAT
-     * ============================================================
      */
 
     @Override
     public OpenAIChatResponse chat(OpenAIChatRequest request) {
-
         if (request == null
                 || request.getMessage() == null
                 || request.getMessage().isBlank()) {
@@ -146,9 +93,7 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
     }
 
     /*
-     * ============================================================
-     * MATCH SKILLS
-     * ============================================================
+     * SKILL MATCH
      */
 
     @Override
@@ -157,16 +102,13 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
     }
 
     /*
-     * ============================================================
      * JOB RECOMMENDATIONS
-     * ============================================================
      */
 
     @Override
     public List<JobRecommendationResponse> getJobRecommendations(
             Long candidateId
     ) {
-
         CandidateData candidate = getCandidate(candidateId);
 
         if (candidate == null) {
@@ -185,8 +127,7 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
                 .filter(Objects::nonNull)
                 .map(job -> {
                     double score = skillMatchingService.calculateMatchScore(
-                            candidate,
-                            job
+                            candidate, job
                     );
 
                     return JobRecommendationResponse.builder()
@@ -207,18 +148,14 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
     }
 
     /*
-     * ============================================================
-     * MATCH SPECIFIC JOB
-     * ============================================================
+     * MATCH A SPECIFIC JOB
      */
 
     @Override
     public JobMatchingResponse matchJob(JobMatchRequest request) {
-
         if (request == null
                 || request.getJobId() == null
                 || request.getCandidateId() == null) {
-
             return JobMatchingResponse.builder()
                     .matchScore(0.0)
                     .matchLevel("LOW")
@@ -226,10 +163,9 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
                     .build();
         }
 
-        Map<String, Object> jobResponse =
-                jobServiceClient.getJobById(request.getJobId());
-
-        JobData job = convertToJobData(jobResponse);
+        JobData job = convertToJobData(
+                jobServiceClient.getJobById(request.getJobId())
+        );
         CandidateData candidate = getCandidate(request.getCandidateId());
 
         if (job == null || candidate == null) {
@@ -245,8 +181,7 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
         }
 
         double score = skillMatchingService.calculateMatchScore(
-                candidate,
-                job
+                candidate, job
         );
 
         return JobMatchingResponse.builder()
@@ -259,14 +194,11 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
     }
 
     /*
-     * ============================================================
-     * SKILL MATCH
-     * ============================================================
+     * SKILL MATCH DETAILS
      */
 
     @Override
     public SkillMatchResponse getSkillMatch(Long candidateId) {
-
         CandidateData candidate = getCandidate(candidateId);
 
         if (candidate == null) {
@@ -296,8 +228,7 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
                 .max(
                         Comparator.comparingDouble(
                                 job -> skillMatchingService.calculateMatchScore(
-                                        candidate,
-                                        job
+                                        candidate, job
                                 )
                         )
                 )
@@ -308,50 +239,44 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
         }
 
         double score = skillMatchingService.calculateMatchScore(
-                candidate,
-                bestJob
+                candidate, bestJob
         );
-
-        List<String> matchingSkills =
-                skillMatchingService.getMatchingSkills(candidate, bestJob);
-
-        List<String> missingSkills =
-                skillMatchingService.getMissingSkills(candidate, bestJob);
 
         return SkillMatchResponse.builder()
                 .candidateId(candidateId)
-                .matchingSkills(matchingSkills)
-                .missingSkills(missingSkills)
+                .matchingSkills(
+                        skillMatchingService.getMatchingSkills(candidate, bestJob)
+                )
+                .missingSkills(
+                        skillMatchingService.getMissingSkills(candidate, bestJob)
+                )
                 .matchScore(score)
                 .build();
     }
 
     /*
-     * ============================================================
      * CANDIDATE RANKING
-     * ============================================================
      */
 
     @Override
     public List<CandidateRankingResponse> rankCandidates(
             CandidateRankingRequest request
     ) {
-
         if (request == null || request.getJobId() == null) {
             return Collections.emptyList();
         }
 
-        Map<String, Object> jobResponse =
-                jobServiceClient.getJobById(request.getJobId());
-
-        JobData job = convertToJobData(jobResponse);
+        JobData job = convertToJobData(
+                jobServiceClient.getJobById(request.getJobId())
+        );
 
         if (job == null) {
             return Collections.emptyList();
         }
 
-        List<CandidateData> candidates =
-                getCandidatesForJob(request.getJobId());
+        List<CandidateData> candidates = getCandidatesForJob(
+                request.getJobId()
+        );
 
         if (candidates.isEmpty()) {
             return Collections.emptyList();
@@ -365,8 +290,7 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
             }
 
             double score = skillMatchingService.calculateMatchScore(
-                    candidate,
-                    job
+                    candidate, job
             );
 
             rankings.add(
@@ -393,13 +317,10 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
     }
 
     /*
-     * ============================================================
-     * CANDIDATES FOR JOB
-     * ============================================================
+     * LOAD CANDIDATES WHO APPLIED FOR A JOB
      */
 
     private List<CandidateData> getCandidatesForJob(Long jobId) {
-
         if (jobId == null) {
             return Collections.emptyList();
         }
@@ -434,45 +355,39 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
         return new ArrayList<>(uniqueCandidates.values());
     }
 
-    /*
-     * ============================================================
-     * EXTRACT CANDIDATE ID FROM APPLICATION
-     * ============================================================
-     */
-
     private Long extractCandidateId(Map<String, Object> application) {
-
         if (application == null) {
             return null;
         }
 
         Long candidateId = getLongValue(
                 application.get("candidateId"),
+                application.get("candidate_id"),
                 application.get("applicantId"),
-                application.get("userId")
+                application.get("applicant_id"),
+                application.get("jobSeekerId"),
+                application.get("job_seeker_id"),
+                application.get("userId"),
+                application.get("user_id")
         );
 
         if (candidateId != null) {
             return candidateId;
         }
 
-        candidateId = getNestedId(application.get("candidate"));
-
-        if (candidateId != null) {
-            return candidateId;
+        for (String key : List.of(
+                "candidate", "applicant", "jobSeeker", "job_seeker", "user"
+        )) {
+            candidateId = getNestedId(application.get(key));
+            if (candidateId != null) {
+                return candidateId;
+            }
         }
 
-        candidateId = getNestedId(application.get("applicant"));
-
-        if (candidateId != null) {
-            return candidateId;
-        }
-
-        return getNestedId(application.get("user"));
+        return null;
     }
 
     private Long getNestedId(Object value) {
-
         if (!(value instanceof Map<?, ?> map)) {
             return null;
         }
@@ -480,28 +395,29 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
         return getLongValue(
                 map.get("id"),
                 map.get("candidateId"),
+                map.get("candidate_id"),
                 map.get("applicantId"),
-                map.get("userId")
+                map.get("applicant_id"),
+                map.get("jobSeekerId"),
+                map.get("job_seeker_id"),
+                map.get("userId"),
+                map.get("user_id")
         );
     }
 
     /*
-     * ============================================================
      * CANDIDATE RECOMMENDATIONS
-     * ============================================================
      */
 
     @Override
     public List<CandidateRecommendationResponse> getCandidateRecommendations(
             Long jobId
     ) {
-
         if (jobId == null) {
             return Collections.emptyList();
         }
 
-        Map<String, Object> jobResponse = jobServiceClient.getJobById(jobId);
-        JobData job = convertToJobData(jobResponse);
+        JobData job = convertToJobData(jobServiceClient.getJobById(jobId));
 
         if (job == null) {
             return Collections.emptyList();
@@ -517,8 +433,7 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
                 .filter(Objects::nonNull)
                 .map(candidate -> {
                     double score = skillMatchingService.calculateMatchScore(
-                            candidate,
-                            job
+                            candidate, job
                     );
 
                     return CandidateRecommendationResponse.builder()
@@ -538,28 +453,20 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
     }
 
     /*
-     * ============================================================
      * RESUME ANALYSIS
-     * ============================================================
      */
 
     @Override
     public ResumeAnalysisResponse analyzeResume(ResumeAnalysisRequest request) {
-
         if (request == null
                 || request.getResumeText() == null
                 || request.getResumeText().isBlank()) {
-
             return ResumeAnalysisResponse.builder()
                     .overallScore(0.0)
                     .strengths(Collections.emptyList())
-                    .weaknesses(
-                            List.of("No resume content was provided.")
-                    )
+                    .weaknesses(List.of("No resume content was provided."))
                     .recommendedSkills(Collections.emptyList())
-                    .summary(
-                            "No resume content was provided for analysis."
-                    )
+                    .summary("No resume content was provided for analysis.")
                     .build();
         }
 
@@ -570,40 +477,11 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
         List<String> weaknesses = new ArrayList<>();
         List<String> recommendedSkills = new ArrayList<>();
 
-        detectStrength(
-                normalizedText,
-                "java",
-                "Java experience detected",
-                strengths
-        );
-
-        detectStrength(
-                normalizedText,
-                "spring",
-                "Spring experience detected",
-                strengths
-        );
-
-        detectStrength(
-                normalizedText,
-                "react",
-                "React experience detected",
-                strengths
-        );
-
-        detectStrength(
-                normalizedText,
-                "typescript",
-                "TypeScript experience detected",
-                strengths
-        );
-
-        detectStrength(
-                normalizedText,
-                "sql",
-                "SQL experience detected",
-                strengths
-        );
+        detectStrength(normalizedText, "java", "Java experience detected", strengths);
+        detectStrength(normalizedText, "spring", "Spring experience detected", strengths);
+        detectStrength(normalizedText, "react", "React experience detected", strengths);
+        detectStrength(normalizedText, "typescript", "TypeScript experience detected", strengths);
+        detectStrength(normalizedText, "sql", "SQL experience detected", strengths);
 
         if (strengths.isEmpty()) {
             weaknesses.add(
@@ -620,9 +498,7 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
         }
 
         double score = calculateResumeScore(
-                strengths,
-                weaknesses,
-                resumeText
+                strengths, weaknesses, resumeText
         );
 
         return ResumeAnalysisResponse.builder()
@@ -630,33 +506,27 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
                 .strengths(strengths)
                 .weaknesses(weaknesses)
                 .recommendedSkills(recommendedSkills)
-                .summary(
-                        buildResumeSummary(score, strengths, weaknesses)
-                )
+                .summary(buildResumeSummary(score, strengths, weaknesses))
                 .build();
     }
 
     /*
-     * ============================================================
-     * GET CANDIDATE
-     * ============================================================
+     * LOAD CANDIDATE AND RESUME DATA
      */
 
     private CandidateData getCandidate(Long candidateId) {
-
         if (candidateId == null) {
             return null;
         }
 
         Map<String, Object> candidateResponse =
-                userServiceClient.getUserById(candidateId);
+                unwrapResponse(userServiceClient.getUserById(candidateId));
 
         if (candidateResponse == null) {
             return null;
         }
 
-        CandidateData candidate =
-                convertToCandidateData(candidateResponse);
+        CandidateData candidate = convertToCandidateData(candidateResponse);
 
         if (candidate == null) {
             return null;
@@ -669,23 +539,19 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
             Map<String, Object> selectedResume = selectBestResume(resumes);
 
             if (selectedResume != null) {
-                mergeResumeIntoCandidate(candidate, selectedResume);
+                mergeResumeIntoCandidate(
+                        candidate,
+                        unwrapResponse(selectedResume)
+                );
             }
         }
 
         return candidate;
     }
 
-    /*
-     * ============================================================
-     * SELECT BEST RESUME
-     * ============================================================
-     */
-
     private Map<String, Object> selectBestResume(
             List<Map<String, Object>> resumes
     ) {
-
         if (resumes == null || resumes.isEmpty()) {
             return null;
         }
@@ -711,37 +577,55 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
     }
 
     /*
-     * ============================================================
-     * MERGE RESUME INTO CANDIDATE
-     * ============================================================
+     * MERGE RESUME SKILLS AND EXPERIENCE INTO CANDIDATE
      */
 
     private void mergeResumeIntoCandidate(
             CandidateData candidate,
             Map<String, Object> resume
     ) {
-
         if (candidate == null || resume == null) {
             return;
         }
 
         List<SkillData> resumeSkills = new ArrayList<>();
 
-        addStructuredSkills(resumeSkills, resume.get("skills"));
+        addSkillsFromPossibleFields(
+                resumeSkills,
+                resume,
+                "skills", "technicalSkills", "technical_skills",
+                "skillSet", "skill_set", "keySkills", "key_skills"
+        );
 
-        String summary = getStringValue(resume.get("summary"));
+        String summary = firstNonBlank(
+                getStringValue(resume.get("summary")),
+                getStringValue(resume.get("professionalSummary")),
+                getStringValue(resume.get("profileSummary")),
+                getStringValue(resume.get("objective"))
+        );
 
-        String workExperienceText =
-                extractWorkExperienceText(resume.get("workExperiences"));
+        String workExperienceText = joinTextFields(
+                resume,
+                "workExperiences", "work_experiences",
+                "workExperience", "work_experience",
+                "experience", "experiences", "employmentHistory",
+                "employment_history"
+        );
 
-        String educationText =
-                extractEducationText(resume.get("educations"));
+        String educationText = joinTextFields(
+                resume,
+                "educations", "educationHistory", "education_history",
+                "education", "qualifications"
+        );
 
         addRecognizedSkillsFromText(
                 resumeSkills,
                 summary,
                 workExperienceText,
-                educationText
+                educationText,
+                getStringValue(resume.get("resumeText")),
+                getStringValue(resume.get("resume_text")),
+                getStringValue(resume.get("description"))
         );
 
         List<SkillData> existingSkills = candidate.getSkills();
@@ -752,20 +636,15 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
         }
 
         for (SkillData skill : resumeSkills) {
-            if (skill == null
-                    || skill.getName() == null
-                    || skill.getName().isBlank()) {
-                continue;
+            if (skill != null && skill.getName() != null) {
+                addSkillName(existingSkills, skill.getName());
             }
-
-            addSkillName(existingSkills, skill.getName());
         }
 
         if ((candidate.getExperience() == null
                 || candidate.getExperience().isBlank())
                 && workExperienceText != null
                 && !workExperienceText.isBlank()) {
-
             candidate.setExperience(workExperienceText);
         }
 
@@ -773,7 +652,6 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
                 || candidate.getEducation().isBlank())
                 && educationText != null
                 && !educationText.isBlank()) {
-
             candidate.setEducation(educationText);
         }
 
@@ -785,103 +663,108 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
         );
     }
 
-    /*
-     * ============================================================
-     * WORK EXPERIENCE EXTRACTION
-     * ============================================================
-     */
-
-    private String extractWorkExperienceText(Object rawExperiences) {
-
-        if (!(rawExperiences instanceof Collection<?> experiences)) {
+    private String joinTextFields(
+            Map<String, Object> data,
+            String... keys
+    ) {
+        if (data == null || keys == null) {
             return null;
         }
 
         List<String> parts = new ArrayList<>();
 
-        for (Object rawExperience : experiences) {
-            if (!(rawExperience instanceof Map<?, ?> experience)) {
+        for (String key : keys) {
+            Object value = data.get(key);
+
+            if (value == null) {
                 continue;
             }
 
-            addTextValue(parts, experience.get("jobTitle"));
-            addTextValue(parts, experience.get("title"));
-            addTextValue(parts, experience.get("position"));
-            addTextValue(parts, experience.get("company"));
-            addTextValue(parts, experience.get("description"));
-            addTextValue(parts, experience.get("responsibilities"));
+            if (value instanceof Collection<?> collection) {
+                for (Object item : collection) {
+                    collectTextFromObject(parts, item);
+                }
+            } else {
+                collectTextFromObject(parts, value);
+            }
         }
 
         return parts.isEmpty() ? null : String.join(" ", parts);
     }
 
-    /*
-     * ============================================================
-     * EDUCATION EXTRACTION
-     * ============================================================
-     */
-
-    private String extractEducationText(Object rawEducations) {
-
-        if (!(rawEducations instanceof Collection<?> educations)) {
-            return null;
+    private void collectTextFromObject(List<String> parts, Object value) {
+        if (value == null) {
+            return;
         }
 
-        List<String> parts = new ArrayList<>();
-
-        for (Object rawEducation : educations) {
-            if (!(rawEducation instanceof Map<?, ?> education)) {
-                continue;
+        if (value instanceof Map<?, ?> map) {
+            for (String key : List.of(
+                    "jobTitle", "job_title", "title", "position",
+                    "company", "description", "responsibilities",
+                    "degree", "fieldOfStudy", "field_of_study",
+                    "institution", "school", "name", "details"
+            )) {
+                addTextValue(parts, map.get(key));
             }
-
-            addTextValue(parts, education.get("degree"));
-            addTextValue(parts, education.get("fieldOfStudy"));
-            addTextValue(parts, education.get("institution"));
-            addTextValue(parts, education.get("description"));
+            return;
         }
 
-        return parts.isEmpty() ? null : String.join(" ", parts);
-    }
-
-    private void addTextValue(List<String> values, Object value) {
-
-        String text = getStringValue(value);
-
-        if (text != null && !text.isBlank()) {
-            values.add(text);
-        }
+        addTextValue(parts, value);
     }
 
     /*
-     * ============================================================
      * CANDIDATE CONVERSION
-     * ============================================================
      */
 
     private CandidateData convertToCandidateData(
-            Map<String, Object> data
+            Map<String, Object> originalData
     ) {
+        Map<String, Object> data = unwrapResponse(originalData);
 
         if (data == null || data.isEmpty()) {
             return null;
         }
 
-        Long id = getLongValue(data.get("id"), data.get("userId"));
+        Long id = getLongValue(
+                data.get("id"),
+                data.get("userId"),
+                data.get("user_id"),
+                data.get("candidateId"),
+                data.get("candidate_id")
+        );
 
         String fullName = firstNonBlank(
                 getStringValue(data.get("fullName")),
-                getStringValue(data.get("name"))
+                getStringValue(data.get("full_name")),
+                getStringValue(data.get("name")),
+                getStringValue(data.get("username"))
         );
 
-        String email = getStringValue(data.get("email"));
-        String phone = getStringValue(data.get("phone"));
+        String email = firstNonBlank(
+                getStringValue(data.get("email")),
+                getStringValue(data.get("emailAddress")),
+                getStringValue(data.get("email_address"))
+        );
+
+        String phone = firstNonBlank(
+                getStringValue(data.get("phone")),
+                getStringValue(data.get("phoneNumber")),
+                getStringValue(data.get("phone_number"))
+        );
 
         String experience = firstNonBlank(
                 getStringValue(data.get("experience")),
-                getStringValue(data.get("workExperience"))
+                getStringValue(data.get("workExperience")),
+                getStringValue(data.get("work_experience")),
+                getStringValue(data.get("yearsOfExperience")),
+                getStringValue(data.get("years_of_experience"))
         );
 
-        String education = getStringValue(data.get("education"));
+        String education = firstNonBlank(
+                getStringValue(data.get("education")),
+                getStringValue(data.get("highestEducation")),
+                getStringValue(data.get("highest_education"))
+        );
 
         List<SkillData> skills = extractCandidateSkills(data);
 
@@ -897,70 +780,126 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
     }
 
     /*
-     * ============================================================
-     * CANDIDATE SKILLS
-     * ============================================================
+     * CANDIDATE SKILL EXTRACTION
      */
 
     private List<SkillData> extractCandidateSkills(
             Map<String, Object> data
     ) {
-
         List<SkillData> skills = new ArrayList<>();
 
         if (data == null) {
             return skills;
         }
 
-        addStructuredSkills(skills, data.get("skills"));
+        addSkillsFromPossibleFields(
+                skills,
+                data,
+                "skills", "technicalSkills", "technical_skills",
+                "skillSet", "skill_set", "keySkills", "key_skills",
+                "competencies", "technologies", "tools",
+                "programmingLanguages", "programming_languages"
+        );
 
         addRecognizedSkillsFromText(
                 skills,
                 getStringValue(data.get("experience")),
                 getStringValue(data.get("workExperience")),
+                getStringValue(data.get("work_experience")),
                 getStringValue(data.get("education")),
                 getStringValue(data.get("summary")),
+                getStringValue(data.get("professionalSummary")),
+                getStringValue(data.get("professional_summary")),
                 getStringValue(data.get("bio")),
-                getStringValue(data.get("about"))
+                getStringValue(data.get("about")),
+                getStringValue(data.get("description")),
+                getStringValue(data.get("resumeText")),
+                getStringValue(data.get("resume_text"))
         );
 
         return skills;
     }
 
     /*
-     * ============================================================
      * JOB CONVERSION
-     * ============================================================
      */
 
-    private JobData convertToJobData(Map<String, Object> data) {
+    private JobData convertToJobData(Map<String, Object> originalData) {
+        Map<String, Object> data = unwrapResponse(originalData);
 
         if (data == null || data.isEmpty()) {
             return null;
         }
 
-        Long id = getLongValue(data.get("id"), data.get("jobId"));
+        Long id = getLongValue(data.get("id"), data.get("jobId"), data.get("job_id"));
 
-        String title = getStringValue(data.get("title"));
-        String description = getStringValue(data.get("description"));
+        String title = firstNonBlank(
+                getStringValue(data.get("title")),
+                getStringValue(data.get("jobTitle")),
+                getStringValue(data.get("job_title")),
+                getStringValue(data.get("position"))
+        );
+
+        String description = firstNonBlank(
+                getStringValue(data.get("description")),
+                getStringValue(data.get("jobDescription")),
+                getStringValue(data.get("job_description"))
+        );
 
         String category = firstNonBlank(
                 getStringValue(data.get("category")),
-                getNestedStringValue(data.get("category"), "name")
+                getNestedStringValue(data.get("category"), "name"),
+                getStringValue(data.get("jobCategory")),
+                getNestedStringValue(data.get("jobCategory"), "name")
         );
 
-        String jobType = getStringValue(data.get("jobType"));
-        String workMode = getStringValue(data.get("workMode"));
-        String experienceLevel = getStringValue(data.get("experienceLevel"));
-        String city = getStringValue(data.get("city"));
-        String country = getStringValue(data.get("country"));
+        String jobType = firstNonBlank(
+                getStringValue(data.get("jobType")),
+                getStringValue(data.get("job_type")),
+                getStringValue(data.get("employmentType")),
+                getStringValue(data.get("employment_type"))
+        );
 
-        Integer openings = getIntegerValue(data.get("openings"));
-        Long employerId = getLongValue(data.get("employerId"));
+        String workMode = firstNonBlank(
+                getStringValue(data.get("workMode")),
+                getStringValue(data.get("work_mode")),
+                getStringValue(data.get("workplaceType")),
+                getStringValue(data.get("workplace_type"))
+        );
+
+        String experienceLevel = firstNonBlank(
+                getStringValue(data.get("experienceLevel")),
+                getStringValue(data.get("experience_level")),
+                getStringValue(data.get("experienceRequired")),
+                getStringValue(data.get("experience_required"))
+        );
+
+        String city = firstNonBlank(
+                getStringValue(data.get("city")),
+                getNestedStringValue(data.get("location"), "city")
+        );
+
+        String country = firstNonBlank(
+                getStringValue(data.get("country")),
+                getNestedStringValue(data.get("location"), "country")
+        );
+
+        Integer openings = getIntegerValue(
+                firstNonNull(data.get("openings"), data.get("numberOfOpenings"))
+        );
+
+        Long employerId = getLongValue(
+                data.get("employerId"),
+                data.get("employer_id"),
+                data.get("companyId"),
+                data.get("company_id")
+        );
 
         String companyName = firstNonBlank(
                 getStringValue(data.get("companyName")),
-                getNestedStringValue(data.get("company"), "name")
+                getStringValue(data.get("company_name")),
+                getNestedStringValue(data.get("company"), "name"),
+                getNestedStringValue(data.get("employer"), "name")
         );
 
         List<SkillData> skills = extractJobSkills(data);
@@ -983,45 +922,75 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
     }
 
     /*
-     * ============================================================
      * JOB SKILL EXTRACTION
-     * ============================================================
      */
 
     private List<SkillData> extractJobSkills(Map<String, Object> data) {
-
         List<SkillData> skills = new ArrayList<>();
 
         if (data == null) {
             return skills;
         }
 
-        addStructuredSkills(skills, data.get("skills"));
+        addSkillsFromPossibleFields(
+                skills,
+                data,
+                "skills", "requiredSkills", "required_skills",
+                "technicalSkills", "technical_skills",
+                "skillRequirements", "skill_requirements",
+                "preferredSkills", "preferred_skills",
+                "qualifications", "technologies", "tools",
+                "programmingLanguages", "programming_languages"
+        );
 
         addRecognizedSkillsFromText(
                 skills,
                 getStringValue(data.get("requirements")),
                 getStringValue(data.get("responsibilities")),
                 getStringValue(data.get("description")),
+                getStringValue(data.get("jobDescription")),
+                getStringValue(data.get("job_description")),
                 getStringValue(data.get("benefits")),
-                getStringValue(data.get("title"))
+                getStringValue(data.get("title")),
+                getStringValue(data.get("jobTitle")),
+                getStringValue(data.get("experienceLevel")),
+                getStringValue(data.get("experience_level"))
         );
 
         return skills;
     }
 
     /*
-     * ============================================================
+     * READ SKILLS FROM MULTIPLE POSSIBLE FIELD NAMES
+     */
+
+    private void addSkillsFromPossibleFields(
+            List<SkillData> skills,
+            Map<String, Object> data,
+            String... fieldNames
+    ) {
+        if (skills == null || data == null || fieldNames == null) {
+            return;
+        }
+
+        for (String fieldName : fieldNames) {
+            Object value = data.get(fieldName);
+
+            if (value != null) {
+                addStructuredSkills(skills, value);
+            }
+        }
+    }
+
+    /*
      * STRUCTURED SKILL PARSING
-     * ============================================================
      */
 
     private void addStructuredSkills(
             List<SkillData> skills,
             Object rawSkills
     ) {
-
-        if (rawSkills == null) {
+        if (rawSkills == null || skills == null) {
             return;
         }
 
@@ -1032,13 +1001,38 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
             return;
         }
 
-        if (rawSkills instanceof Map<?, ?>) {
-            addSingleStructuredSkill(skills, rawSkills);
+        if (rawSkills instanceof Map<?, ?> map) {
+            Object nestedSkills = firstNonNull(
+                    map.get("skills"),
+                    map.get("items"),
+                    map.get("values"),
+                    map.get("data")
+            );
+
+            if (nestedSkills != null) {
+                addStructuredSkills(skills, nestedSkills);
+            } else {
+                addSingleStructuredSkill(skills, rawSkills);
+            }
             return;
         }
 
-        if (rawSkills instanceof String skill) {
-            addSkillName(skills, skill);
+        if (rawSkills instanceof String value) {
+            String trimmed = value.trim();
+
+            if (trimmed.isEmpty()) {
+                return;
+            }
+
+            String[] splitSkills = trimmed.split("[,;|\\n\\r]+");
+
+            if (splitSkills.length > 1) {
+                for (String skill : splitSkills) {
+                    addSkillName(skills, skill);
+                }
+            } else {
+                addSkillName(skills, trimmed);
+            }
         }
     }
 
@@ -1046,13 +1040,12 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
             List<SkillData> skills,
             Object rawSkill
     ) {
-
         if (rawSkill == null) {
             return;
         }
 
         if (rawSkill instanceof String skill) {
-            addSkillName(skills, skill);
+            addStructuredSkills(skills, skill);
             return;
         }
 
@@ -1060,33 +1053,47 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
             String name = firstNonBlank(
                     getStringValue(skillMap.get("name")),
                     getStringValue(skillMap.get("skillName")),
-                    getStringValue(skillMap.get("title"))
+                    getStringValue(skillMap.get("skill_name")),
+                    getStringValue(skillMap.get("title")),
+                    getStringValue(skillMap.get("skill")),
+                    getStringValue(skillMap.get("value")),
+                    getStringValue(skillMap.get("label"))
             );
 
-            addSkillName(skills, name);
+            if (name != null) {
+                addSkillName(skills, name);
+            } else {
+                Object nested = firstNonNull(
+                        skillMap.get("skills"),
+                        skillMap.get("items"),
+                        skillMap.get("values")
+                );
+
+                if (nested != null) {
+                    addStructuredSkills(skills, nested);
+                }
+            }
         }
     }
 
     /*
-     * ============================================================
-     * ADD SKILL WITHOUT DUPLICATES
-     * ============================================================
+     * ADD SKILLS WITHOUT DUPLICATES
      */
 
     private void addSkillName(List<SkillData> skills, String name) {
-
-        String finalName = name == null ? null : name.trim();
-
-        if (finalName == null || finalName.isBlank()) {
+        if (skills == null || name == null || name.isBlank()) {
             return;
         }
 
+        String finalName = name.trim();
+
         boolean exists = skills.stream()
                 .filter(Objects::nonNull)
+                .map(SkillData::getName)
+                .filter(Objects::nonNull)
                 .anyMatch(existing ->
-                        existing.getName() != null
-                                && existing.getName().trim()
-                                .equalsIgnoreCase(finalName)
+                        normalizeSkillName(existing)
+                                .equals(normalizeSkillName(finalName))
                 );
 
         if (!exists) {
@@ -1098,18 +1105,27 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
         }
     }
 
+    private String normalizeSkillName(String value) {
+        if (value == null) {
+            return "";
+        }
+
+        return value.trim()
+                .toLowerCase(Locale.ROOT)
+                .replaceAll("[^a-z0-9+#. ]", "")
+                .replaceAll("\\s+", " ")
+                .trim();
+    }
+
     /*
-     * ============================================================
-     * TEXT SKILL EXTRACTION
-     * ============================================================
+     * EXTRACT RECOGNIZED SKILLS FROM TEXT
      */
 
     private void addRecognizedSkillsFromText(
             List<SkillData> skills,
             String... texts
     ) {
-
-        if (texts == null || texts.length == 0) {
+        if (skills == null || texts == null || texts.length == 0) {
             return;
         }
 
@@ -1129,7 +1145,6 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
     }
 
     private boolean containsSkill(String normalizedText, String skill) {
-
         if (normalizedText == null || skill == null || skill.isBlank()) {
             return false;
         }
@@ -1150,13 +1165,55 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
     }
 
     /*
-     * ============================================================
+     * RESPONSE WRAPPER HANDLING
+     */
+
+    private Map<String, Object> unwrapResponse(Map<String, Object> response) {
+        if (response == null || response.isEmpty()) {
+            return response;
+        }
+
+        Map<String, Object> current = response;
+
+        for (int depth = 0; depth < 3; depth++) {
+            Map<String, Object> nested = null;
+
+            for (String key : RESPONSE_WRAPPER_KEYS) {
+                Object value = current.get(key);
+
+                if (value instanceof Map<?, ?> map) {
+                    nested = toStringKeyMap(map);
+                    break;
+                }
+            }
+
+            if (nested == null || nested.isEmpty()) {
+                break;
+            }
+
+            current = nested;
+        }
+
+        return current;
+    }
+
+    private Map<String, Object> toStringKeyMap(Map<?, ?> source) {
+        Map<String, Object> result = new LinkedHashMap<>();
+
+        for (Map.Entry<?, ?> entry : source.entrySet()) {
+            if (entry.getKey() != null) {
+                result.put(entry.getKey().toString(), entry.getValue());
+            }
+        }
+
+        return result;
+    }
+
+    /*
      * VALUE HELPERS
-     * ============================================================
      */
 
     private Long getLongValue(Object... values) {
-
         if (values == null) {
             return null;
         }
@@ -1173,7 +1230,7 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
             try {
                 return Long.parseLong(value.toString().trim());
             } catch (NumberFormatException ignored) {
-                // Try the next possible value.
+                // Try the next possible field.
             }
         }
 
@@ -1181,7 +1238,6 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
     }
 
     private Integer getIntegerValue(Object value) {
-
         if (value == null) {
             return null;
         }
@@ -1198,18 +1254,27 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
     }
 
     private String getStringValue(Object value) {
-
         if (value == null || value instanceof Map<?, ?>) {
             return null;
         }
 
-        String result = value.toString().trim();
+        if (value instanceof Collection<?> collection) {
+            if (collection.isEmpty()) {
+                return null;
+            }
 
+            return collection.stream()
+                    .filter(Objects::nonNull)
+                    .map(Object::toString)
+                    .collect(Collectors.joining(" "))
+                    .trim();
+        }
+
+        String result = value.toString().trim();
         return result.isEmpty() ? null : result;
     }
 
     private String getNestedStringValue(Object value, String key) {
-
         if (!(value instanceof Map<?, ?> map)) {
             return null;
         }
@@ -1218,7 +1283,6 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
     }
 
     private String firstNonBlank(String... values) {
-
         if (values == null) {
             return null;
         }
@@ -1232,14 +1296,37 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
         return null;
     }
 
+    private Object firstNonNull(Object... values) {
+        if (values == null) {
+            return null;
+        }
+
+        for (Object value : values) {
+            if (value != null) {
+                return value;
+            }
+        }
+
+        return null;
+    }
+
+    private void addTextValue(List<String> values, Object value) {
+        if (values == null || value == null) {
+            return;
+        }
+
+        String text = getStringValue(value);
+
+        if (text != null && !text.isBlank()) {
+            values.add(text);
+        }
+    }
+
     /*
-     * ============================================================
      * EMPTY SKILL MATCH
-     * ============================================================
      */
 
     private SkillMatchResponse emptySkillMatch(Long candidateId) {
-
         return SkillMatchResponse.builder()
                 .candidateId(candidateId)
                 .matchingSkills(Collections.emptyList())
@@ -1249,9 +1336,7 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
     }
 
     /*
-     * ============================================================
      * RESUME ANALYSIS HELPERS
-     * ============================================================
      */
 
     private void detectStrength(
@@ -1260,8 +1345,7 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
             String message,
             List<String> strengths
     ) {
-
-        if (text.contains(keyword)) {
+        if (text != null && text.contains(keyword)) {
             strengths.add(message);
         }
     }
@@ -1271,7 +1355,6 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
             List<String> weaknesses,
             String resumeText
     ) {
-
         double score = 50.0;
         score += strengths.size() * 10.0;
         score -= weaknesses.size() * 5.0;
@@ -1284,13 +1367,10 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
     }
 
     /*
-     * ============================================================
      * MATCH EXPLANATION
-     * ============================================================
      */
 
     private String buildMatchExplanation(double score) {
-
         if (score >= 80.0) {
             return "Strong match based on the available skills and job requirements.";
         }
@@ -1311,7 +1391,6 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
             List<String> strengths,
             List<String> weaknesses
     ) {
-
         if (!strengths.isEmpty() && weaknesses.isEmpty()) {
             return "The resume contains several recognizable strengths.";
         }
@@ -1321,8 +1400,6 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
         }
 
         return "Resume analysis completed with an overall score of "
-                + score
-                + ".";
+                + score + ".";
     }
 }
-
