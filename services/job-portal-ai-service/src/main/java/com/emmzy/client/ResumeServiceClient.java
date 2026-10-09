@@ -1,130 +1,230 @@
 package com.emmzy.client;
 
-import com.emmzy.exception.ExternalServiceException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestClientException;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 @Component
+@RequiredArgsConstructor
 public class ResumeServiceClient {
 
-    private final RestClient restClient;
+    private final RestClient.Builder restClientBuilder;
 
-    public ResumeServiceClient(
-            RestClient.Builder restClientBuilder,
-            @Value("${services.resume.url}") String resumeServiceUrl
+    @Value("${services.resume.url}")
+    private String resumeServiceUrl;
+
+    /**
+     * Get resumes belonging to a specific candidate.
+     *
+     * Resume Service:
+     *
+     * GET /api/resumes/my
+     *
+     * Header:
+     *
+     * X-User-Id: {candidateId}
+     */
+    public List<Map<String, Object>> getResumesByCandidate(
+            Long candidateId
     ) {
-        this.restClient = restClientBuilder
-                .baseUrl(resumeServiceUrl)
-                .build();
-    }
 
-    /**
-     * Retrieves all resumes from the Resume Service.
-     */
-    public List<Map<String, Object>> getResumes() {
+        if (candidateId == null) {
+            return Collections.emptyList();
+        }
+
         try {
-            List<Map<String, Object>> resumes = restClient
-                    .get()
-                    .uri("/api/resumes")
-                    .retrieve()
-                    .onStatus(
-                            HttpStatusCode::isError,
-                            (request, response) -> {
-                                throw new ExternalServiceException(
-                                        "Resume Service returned an error while fetching resumes"
-                                );
-                            }
-                    )
-                    .body(new ParameterizedTypeReference<>() {});
 
-            return resumes != null ? resumes : List.of();
+            RestClient client =
+                    restClientBuilder
+                            .baseUrl(resumeServiceUrl)
+                            .build();
 
-        } catch (ExternalServiceException exception) {
-            throw exception;
+            List<Map<String, Object>> response =
+                    client.get()
+                            .uri("/api/resumes/my")
+                            .header(
+                                    "X-User-Id",
+                                    String.valueOf(candidateId)
+                            )
+                            .retrieve()
+                            .body(
+                                    new ParameterizedTypeReference<
+                                            List<Map<String, Object>>
+                                            >() {}
+                            );
 
-        } catch (RestClientException exception) {
-            throw new ExternalServiceException(
-                    "Unable to communicate with Resume Service",
-                    exception
+            System.out.println(
+                    "================================================"
             );
+
+            System.out.println(
+                    "RESUME SERVICE RESPONSE"
+            );
+
+            System.out.println(
+                    "Candidate ID: " + candidateId
+            );
+
+            System.out.println(
+                    "Response: " + response
+            );
+
+            System.out.println(
+                    "================================================"
+            );
+
+            return response != null
+                    ? response
+                    : Collections.emptyList();
+
+        } catch (Exception e) {
+
+            System.err.println(
+                    "================================================"
+            );
+
+            System.err.println(
+                    "RESUME SERVICE ERROR"
+            );
+
+            System.err.println(
+                    "Candidate ID: " + candidateId
+            );
+
+            System.err.println(
+                    "Resume Service URL: "
+                            + resumeServiceUrl
+            );
+
+            System.err.println(
+                    "Error Type: "
+                            + e.getClass().getName()
+            );
+
+            System.err.println(
+                    "Error Message: "
+                            + e.getMessage()
+            );
+
+            e.printStackTrace();
+
+            System.err.println(
+                    "================================================"
+            );
+
+            return Collections.emptyList();
         }
     }
 
     /**
-     * Retrieves a specific resume by ID.
+     * Get a specific resume.
+     *
+     * Resume Service requires:
+     *
+     * X-User-Id: {candidateId}
      */
-    public Map<String, Object> getResumeById(Long resumeId) {
-        try {
-            Map<String, Object> resume = restClient
-                    .get()
-                    .uri("/api/resumes/{resumeId}", resumeId)
-                    .retrieve()
-                    .onStatus(
-                            HttpStatusCode::isError,
-                            (request, response) -> {
-                                throw new ExternalServiceException(
-                                        "Resume Service returned an error while fetching resume "
-                                                + resumeId
-                                );
-                            }
-                    )
-                    .body(new ParameterizedTypeReference<>() {});
+    public Map<String, Object> getResumeById(
+            Long resumeId,
+            Long candidateId
+    ) {
 
-            return resume != null ? resume : Map.of();
+        if (resumeId == null
+                || candidateId == null) {
 
-        } catch (ExternalServiceException exception) {
-            throw exception;
-
-        } catch (RestClientException exception) {
-            throw new ExternalServiceException(
-                    "Unable to retrieve resume " + resumeId,
-                    exception
-            );
+            return null;
         }
-    }
 
-    /**
-     * Retrieves resumes belonging to a specific candidate.
-     */
-    public List<Map<String, Object>> getResumesByCandidate(Long candidateId) {
         try {
-            List<Map<String, Object>> resumes = restClient
-                    .get()
-                    .uri(
-                            uriBuilder -> uriBuilder
-                                    .path("/api/resumes")
-                                    .queryParam("candidateId", candidateId)
-                                    .build()
-                    )
-                    .retrieve()
-                    .onStatus(
-                            HttpStatusCode::isError,
-                            (request, response) -> {
-                                throw new ExternalServiceException(
-                                        "Resume Service returned an error while fetching resumes "
-                                                + "for candidate " + candidateId
-                                );
-                            }
-                    )
-                    .body(new ParameterizedTypeReference<>() {});
 
-            return resumes != null ? resumes : List.of();
+            RestClient client =
+                    restClientBuilder
+                            .baseUrl(resumeServiceUrl)
+                            .build();
 
-        } catch (ExternalServiceException exception) {
-            throw exception;
+            Map<String, Object> response =
+                    client.get()
+                            .uri(
+                                    "/api/resumes/{resumeId}",
+                                    resumeId
+                            )
+                            .header(
+                                    "X-User-Id",
+                                    String.valueOf(candidateId)
+                            )
+                            .retrieve()
+                            .body(
+                                    new ParameterizedTypeReference<
+                                            Map<String, Object>
+                                            >() {}
+                            );
 
-        } catch (RestClientException exception) {
-            throw new ExternalServiceException(
-                    "Unable to retrieve resumes for candidate " + candidateId,
-                    exception
+            System.out.println(
+                    "================================================"
             );
+
+            System.out.println(
+                    "SINGLE RESUME RESPONSE"
+            );
+
+            System.out.println(
+                    "Resume ID: " + resumeId
+            );
+
+            System.out.println(
+                    "Candidate ID: " + candidateId
+            );
+
+            System.out.println(
+                    "Response: " + response
+            );
+
+            System.out.println(
+                    "================================================"
+            );
+
+            return response;
+
+        } catch (Exception e) {
+
+            System.err.println(
+                    "================================================"
+            );
+
+            System.err.println(
+                    "SINGLE RESUME SERVICE ERROR"
+            );
+
+            System.err.println(
+                    "Resume ID: " + resumeId
+            );
+
+            System.err.println(
+                    "Candidate ID: " + candidateId
+            );
+
+            System.err.println(
+                    "Error Type: "
+                            + e.getClass().getName()
+            );
+
+            System.err.println(
+                    "Error Message: "
+                            + e.getMessage()
+            );
+
+            e.printStackTrace();
+
+            System.err.println(
+                    "================================================"
+            );
+
+            return null;
         }
     }
 }

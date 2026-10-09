@@ -1,3 +1,4 @@
+
 package com.emmzy.controller;
 
 import com.emmzy.dto.request.OpenAIChatRequest;
@@ -18,7 +19,7 @@ public class AIChatController {
     private final OpenAIService openAIService;
 
     /**
-     * Send a message to the OpenAI GPT model.
+     * Send a message to the OpenAI Responses API.
      *
      * POST /api/ai/chat
      */
@@ -26,18 +27,25 @@ public class AIChatController {
     public ResponseEntity<OpenAIChatResponse> chat(
             @RequestBody OpenAIChatRequest request
     ) {
+        if (request == null
+                || request.getMessage() == null
+                || request.getMessage().isBlank()) {
 
-        if (request == null || request.getMessage() == null || request.getMessage().isBlank()) {
-            throw new IllegalArgumentException("Message cannot be empty");
+            return ResponseEntity.badRequest().body(
+                    OpenAIChatResponse.builder()
+                            .success(false)
+                            .response(null)
+                            .error("Message cannot be empty.")
+                            .build()
+            );
         }
 
-        String response = openAIService.generateResponse(
+        String answer = openAIService.generateResponse(
                 request.getMessage()
         );
 
-        OpenAIChatResponse chatResponse =
-                new OpenAIChatResponse(response);
-
-        return ResponseEntity.ok(chatResponse);
+        return ResponseEntity.ok(
+                new OpenAIChatResponse(answer)
+        );
     }
 }

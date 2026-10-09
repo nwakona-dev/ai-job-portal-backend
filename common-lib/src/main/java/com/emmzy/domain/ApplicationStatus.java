@@ -2,11 +2,12 @@ package com.emmzy.domain;
 
 public enum ApplicationStatus {
 
-    PENDING,
+    APPLIED,
+    HIRED,
+    INTERVIEW,
+    REJECTED,
     REVIEWING,
     SHORTLISTED,
-    INTERVIEW_SCHEDULED,
-    REJECTED,
-    HIRED,
     WITHDRAWN
 }
+

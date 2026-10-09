@@ -24,25 +24,25 @@ public class Application {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "job_seeker_id", nullable = false)
     private Long candidateId;
 
-    @Column(nullable = false)
+    @Column(name = "job_id", nullable = false)
     private Long jobId;
 
-    @Column(nullable = false)
+    @Column(name = "company_id", nullable = false)
     private Long companyId;
 
-    @Column(nullable = false)
+    @Column(name = "employer_id", nullable = false)
     private Long employerId;
 
-    @Column(nullable = false)
+    @Column(name = "resume_id", nullable = false)
     private Long resumeId;
 
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ApplicationStatus status = ApplicationStatus.PENDING;
+    private ApplicationStatus status = ApplicationStatus.APPLIED;
 
     @Column(columnDefinition = "TEXT")
     private String coverLetter;
@@ -55,7 +55,6 @@ public class Application {
     @Column(nullable = false)
     private Boolean isStarred = false;
 
-    @Column
     private Integer aiScore;
 
     @Enumerated(EnumType.STRING)
@@ -72,5 +71,5 @@ public class Application {
     @Column(nullable = false)
     @UpdateTimestamp
     private LocalDateTime updatedAt;
-
 }
+

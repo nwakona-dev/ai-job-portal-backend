@@ -1,3 +1,4 @@
+
 package com.emmzy.dto.response;
 
 import lombok.AllArgsConstructor;
@@ -18,6 +19,8 @@ public class OpenAIChatResponse {
     private String error;
 
     public OpenAIChatResponse(String response) {
+        this.success = true;
         this.response = response;
+        this.error = null;
     }
 }

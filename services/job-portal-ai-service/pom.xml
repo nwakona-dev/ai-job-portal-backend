@@ -27,62 +27,39 @@
 
     <dependencies>
 
-        <!-- ============================================== -->
-        <!-- Spring Boot Web                                -->
-        <!-- ============================================== -->
-
+        <!-- Spring Boot Web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-
-        <!-- ============================================== -->
-        <!-- Spring Validation                              -->
-        <!-- ============================================== -->
-
+        <!-- Validation -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
-
-        <!-- ============================================== -->
-        <!-- Spring Data JPA                                 -->
-        <!-- ============================================== -->
-
+        <!-- JPA -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
 
-
-        <!-- ============================================== -->
-        <!-- MySQL                                           -->
-        <!-- ============================================== -->
-
+        <!-- MySQL -->
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
             <scope>runtime</scope>
         </dependency>
 
-
-        <!-- ============================================== -->
-        <!-- Lombok                                          -->
-        <!-- ============================================== -->
-
+        <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
 
-
-        <!-- ============================================== -->
-        <!-- Spring Boot DevTools                            -->
-        <!-- ============================================== -->
-
+        <!-- DevTools -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-devtools</artifactId>
@@ -90,21 +67,13 @@
             <optional>true</optional>
         </dependency>
 
-
-        <!-- ============================================== -->
-        <!-- Spring Security                                 -->
-        <!-- ============================================== -->
-
+        <!-- Spring Security -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
-
-        <!-- ============================================== -->
-        <!-- JWT                                             -->
-        <!-- ============================================== -->
-
+        <!-- JWT -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
@@ -125,28 +94,19 @@
             <scope>runtime</scope>
         </dependency>
 
-
-        <!-- ============================================== -->
-        <!-- Testing                                         -->
-        <!-- ============================================== -->
-
+        <!-- Testing -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-        </dependency>
+        <!--
+          Do not explicitly add Jackson 2 databind here.
+          Let Spring Boot manage the JSON dependencies.
+        -->
 
     </dependencies>
-
-
-    <!-- ============================================== -->
-    <!-- Build                                            -->
-    <!-- ============================================== -->
 
     <build>
         <plugins>
@@ -163,7 +123,6 @@
                         </exclude>
                     </excludes>
                 </configuration>
-
             </plugin>
 
         </plugins>

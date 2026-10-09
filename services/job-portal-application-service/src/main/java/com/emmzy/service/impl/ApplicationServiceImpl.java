@@ -5,6 +5,7 @@ import com.emmzy.client.JobServiceClient;
 import com.emmzy.client.ResumeServiceClient;
 import com.emmzy.client.UserServiceClient;
 import com.emmzy.domain.ApplicationStatus;
+import com.emmzy.domain.JobStatus;
 import com.emmzy.dto.ApplicationResponse;
 import com.emmzy.dto.CompanyResponse;
 import com.emmzy.dto.JobResponse;
@@ -31,7 +32,6 @@ import java.util.Objects;
 public class ApplicationServiceImpl implements ApplicationService {
 
     private final ApplicationRepository applicationRepository;
-
     private final JobServiceClient jobServiceClient;
     private final ResumeServiceClient resumeServiceClient;
     private final UserServiceClient userServiceClient;
@@ -43,49 +43,54 @@ public class ApplicationServiceImpl implements ApplicationService {
             CreateApplicationRequest req
     ) throws Exception {
 
-        // 1. Check if the candidate has already applied for this job
+        if (req == null || req.getJobId() == null) {
+            throw new Exception("Job ID is required");
+        }
+
+        if (req.getResumeId() == null) {
+            throw new Exception("Resume ID is required");
+        }
+
+        // 1. Prevent duplicate applications.
         if (applicationRepository.existsByCandidateIdAndJobId(
                 candidateId,
                 req.getJobId())) {
-
             throw new Exception("You have already applied for this job");
         }
 
-        // 2. Get the job from Job Service
+        // 2. Retrieve the job.
         JobResponse job = jobServiceClient.getJobById(req.getJobId());
 
         if (job == null) {
             throw new Exception("Job not found");
         }
 
-        // 3. Check if the job is open
-        if (job.getStatus() != com.emmzy.domain.JobStatus.OPEN) {
+        // 3. Ensure the job is open.
+        if (job.getStatus() != JobStatus.OPEN) {
             throw new Exception(
                     "This job is not currently open for applications"
             );
         }
 
-        // 4. Check if the job has a company
+        // 4. Validate company information.
         if (job.getCompany() == null ||
                 job.getCompany().getId() == null) {
-
             throw new Exception(
                     "Company information not found for this job"
             );
         }
 
-        // 5. Get resume from Resume Service
-        ResumeResponse resume =
-                resumeServiceClient.getResumeById(
-                        req.getResumeId(),
-                        candidateId
-                );
+        // 5. Validate the candidate's resume.
+        ResumeResponse resume = resumeServiceClient.getResumeById(
+                req.getResumeId(),
+                candidateId
+        );
 
         if (resume == null) {
             throw new Exception("Resume not found");
         }
 
-        // 6. Get candidate information from User Service
+        // 6. Validate the candidate.
         UserResponse candidate =
                 userServiceClient.getUserById(candidateId);
 
@@ -93,7 +98,7 @@ public class ApplicationServiceImpl implements ApplicationService {
             throw new Exception("Candidate not found");
         }
 
-        // 7. Get company and employer information from JobResponse
+        // 7. Retrieve company and employer IDs.
         Long companyId = job.getCompany().getId();
         Long employerId = job.getEmployerId();
 
@@ -103,23 +108,24 @@ public class ApplicationServiceImpl implements ApplicationService {
             );
         }
 
-        // 8. Create the application
-        Application application =
-                ApplicationMapper.toEntity(
-                        req,
-                        candidateId,
-                        companyId,
-                        employerId
-                );
+        // 8. Map the request to an application entity.
+        Application application = ApplicationMapper.toEntity(
+                req,
+                candidateId,
+                companyId,
+                employerId
+        );
 
-        // 9. Save application
+        // IMPORTANT:
+        // Match the initial status to the MySQL ENUM.
+        // PENDING is not a valid database status.
+        application.setStatus(ApplicationStatus.APPLIED);
+
+        // 9. Save the application.
         Application savedApplication =
                 applicationRepository.save(application);
 
-        // 10. AI Screening can run in the background later
-        // TODO: Trigger AI screening asynchronously
-
-        // 11. Return complete application response
+        // 10. Return the complete response.
         return ApplicationMapper.toResponse(
                 savedApplication,
                 job,
@@ -132,30 +138,20 @@ public class ApplicationServiceImpl implements ApplicationService {
     @Override
     public ApplicationResponse getApplicationById(Long id)
             throws Exception {
-
-        Application application =
-                getApplicationEntity(id);
-
-        return buildFullResponse(application);
+        return buildFullResponse(getApplicationEntity(id));
     }
 
     @Override
-    public List<ApplicationResponse> getMyApplication(
-            Long candidateId) {
-
-        return applicationRepository
-                .findByCandidateId(candidateId)
+    public List<ApplicationResponse> getMyApplication(Long candidateId) {
+        return applicationRepository.findByCandidateId(candidateId)
                 .stream()
                 .map(this::buildFullResponse)
                 .toList();
     }
 
     @Override
-    public List<ApplicationResponse> getApplicationForJob(
-            Long jobId) {
-
-        return applicationRepository
-                .findByJobId(jobId)
+    public List<ApplicationResponse> getApplicationForJob(Long jobId) {
+        return applicationRepository.findByJobId(jobId)
                 .stream()
                 .map(this::buildFullResponse)
                 .toList();
@@ -167,14 +163,6 @@ public class ApplicationServiceImpl implements ApplicationService {
             CompanyApplicationFilterRequest filter
     ) throws Exception {
 
-        /*
-         * An employer account may exist before a company has been created.
-         * In that situation there cannot be any company applications yet.
-         *
-         * The Company Service now returns 404 when no company belongs to
-         * this user. Treat that as an empty application list rather than
-         * allowing it to become a 500 from the application service.
-         */
         CompanyResponse company;
 
         try {
@@ -183,7 +171,6 @@ public class ApplicationServiceImpl implements ApplicationService {
             if (isCompanyNotFoundException(e)) {
                 return List.of();
             }
-
             throw e;
         }
 
@@ -191,21 +178,15 @@ public class ApplicationServiceImpl implements ApplicationService {
             return List.of();
         }
 
-        // Get the real company ID
-        Long companyId = company.getId();
-
-        // If no filter was provided, create an empty filter
         if (filter == null) {
             filter = new CompanyApplicationFilterRequest();
         }
 
-        // Build sorting
         Sort sort = buildSort(filter.getSortBy());
 
-        // Find applications belonging to this company
         return applicationRepository.findAll(
                         ApplicationSpecification.forCompanyWithFilters(
-                                companyId,
+                                company.getId(),
                                 filter.getJobId(),
                                 filter.getStatus(),
                                 filter.getIsStarred(),
@@ -219,31 +200,19 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .toList();
     }
 
-    /**
-     * Determines whether an exception from the Company Service represents
-     * the normal "this employer does not have a company yet" situation.
-     *
-     * Feign/HTTP clients can wrap the original 404 in several different
-     * exception types, so the complete cause chain is inspected.
-     */
     private boolean isCompanyNotFoundException(Throwable throwable) {
-
         Throwable current = throwable;
 
         while (current != null) {
-
             String message = current.getMessage();
 
             if (message != null) {
-
-                String lowerMessage =
-                        message.toLowerCase();
+                String lowerMessage = message.toLowerCase();
 
                 if (lowerMessage.contains("404")
                         || lowerMessage.contains("not found")
                         || lowerMessage.contains("no company found")
                         || lowerMessage.contains("company not found")) {
-
                     return true;
                 }
             }
@@ -261,23 +230,16 @@ public class ApplicationServiceImpl implements ApplicationService {
             ApplicationStatus status
     ) throws Exception {
 
-        Application application =
-                getApplicationEntity(applicationId);
+        Application application = getApplicationEntity(applicationId);
 
         assertEmployer(application, employerId);
 
-        if (application.getStatus() ==
-                ApplicationStatus.WITHDRAWN) {
-
-            throw new Exception(
-                    "Candidate has already withdrawn"
-            );
+        if (application.getStatus() == ApplicationStatus.WITHDRAWN) {
+            throw new Exception("Candidate has already withdrawn");
         }
 
         if (status == null) {
-            throw new Exception(
-                    "Application status is required"
-            );
+            throw new Exception("Application status is required");
         }
 
         application.setStatus(status);
@@ -295,45 +257,27 @@ public class ApplicationServiceImpl implements ApplicationService {
             WithdrawApplicationRequest req
     ) throws Exception {
 
-        Application application =
-                getApplicationEntity(applicationId);
+        Application application = getApplicationEntity(applicationId);
 
         assertCandidate(application, candidateId);
 
         if (application.getStatus() == null) {
-            throw new Exception(
-                    "Application status is required"
-            );
+            throw new Exception("Application status is required");
         }
 
-        if (application.getStatus() ==
-                ApplicationStatus.WITHDRAWN) {
-
-            throw new Exception(
-                    "Application has already been withdrawn"
-            );
+        if (application.getStatus() == ApplicationStatus.WITHDRAWN) {
+            throw new Exception("Application has already been withdrawn");
         }
 
-        if (application.getStatus() ==
-                ApplicationStatus.HIRED) {
-
-            throw new Exception(
-                    "A hired application cannot be withdrawn"
-            );
+        if (application.getStatus() == ApplicationStatus.HIRED) {
+            throw new Exception("A hired application cannot be withdrawn");
         }
 
-        application.setStatus(
-                ApplicationStatus.WITHDRAWN
-        );
-
-        application.setWithDrawnAt(
-                LocalDateTime.now()
-        );
+        application.setStatus(ApplicationStatus.WITHDRAWN);
+        application.setWithDrawnAt(LocalDateTime.now());
 
         if (req != null) {
-            application.setWithdrawnReason(
-                    req.getReason()
-            );
+            application.setWithdrawnReason(req.getReason());
         }
 
         Application savedApplication =
@@ -348,15 +292,12 @@ public class ApplicationServiceImpl implements ApplicationService {
             Long employerId
     ) throws Exception {
 
-        Application application =
-                getApplicationEntity(applicationId);
+        Application application = getApplicationEntity(applicationId);
 
         assertEmployer(application, employerId);
 
         application.setIsStarred(
-                !Boolean.TRUE.equals(
-                        application.getIsStarred()
-                )
+                !Boolean.TRUE.equals(application.getIsStarred())
         );
 
         Application savedApplication =
@@ -371,8 +312,7 @@ public class ApplicationServiceImpl implements ApplicationService {
             Long candidateId
     ) throws Exception {
 
-        Application application =
-                getApplicationEntity(applicationId);
+        Application application = getApplicationEntity(applicationId);
 
         assertCandidate(application, candidateId);
 
@@ -380,35 +320,26 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Application getApplicationEntity(Long id)
-            throws Exception {
-
-        return applicationRepository
-                .findById(id)
+    public Application getApplicationEntity(Long id) throws Exception {
+        return applicationRepository.findById(id)
                 .orElseThrow(
-                        () -> new Exception(
-                                "Application not found"
-                        )
+                        () -> new Exception("Application not found")
                 );
     }
 
     public ApplicationResponse buildFullResponse(
-            Application application) {
+            Application application
+    ) {
 
-        // Get job
         JobResponse job =
-                jobServiceClient.getJobById(
-                        application.getJobId()
-                );
+                jobServiceClient.getJobById(application.getJobId());
 
         if (job == null) {
             throw new RuntimeException(
-                    "Job not found: " +
-                            application.getJobId()
+                    "Job not found: " + application.getJobId()
             );
         }
 
-        // Get candidate
         UserResponse candidate =
                 userServiceClient.getUserById(
                         application.getCandidateId()
@@ -421,28 +352,19 @@ public class ApplicationServiceImpl implements ApplicationService {
             );
         }
 
-        // Get resume
-        ResumeResponse resume =
-                resumeServiceClient.getResumeById(
-                        application.getResumeId(),
-                        application.getCandidateId()
-                );
+        ResumeResponse resume = resumeServiceClient.getResumeById(
+                application.getResumeId(),
+                application.getCandidateId()
+        );
 
         if (resume == null) {
             throw new RuntimeException(
-                    "Resume not found: " +
-                            application.getResumeId()
+                    "Resume not found: " + application.getResumeId()
             );
         }
 
-        /*
-         * Company information is already part of JobResponse.
-         * Do not make another Company Service call here.
-         */
-        CompanyResponse company =
-                job.getCompany();
+        CompanyResponse company = job.getCompany();
 
-        // Build complete response
         return ApplicationMapper.toResponse(
                 application,
                 job,
@@ -457,10 +379,7 @@ public class ApplicationServiceImpl implements ApplicationService {
             Long candidateId
     ) throws Exception {
 
-        if (!Objects.equals(
-                application.getCandidateId(),
-                candidateId
-        )) {
+        if (!Objects.equals(application.getCandidateId(), candidateId)) {
             throw new Exception(
                     "You are not the owner of this application"
             );
@@ -472,10 +391,7 @@ public class ApplicationServiceImpl implements ApplicationService {
             Long employerId
     ) throws Exception {
 
-        if (!Objects.equals(
-                application.getEmployerId(),
-                employerId
-        )) {
+        if (!Objects.equals(application.getEmployerId(), employerId)) {
             throw new Exception(
                     "You are not the employer for this application"
             );
@@ -485,29 +401,20 @@ public class ApplicationServiceImpl implements ApplicationService {
     private Sort buildSort(String sortBy) {
 
         if ("AI_SCORE_DESC".equals(sortBy)) {
-
             return Sort.by(
-                    Sort.Order
-                            .desc("aiScore")
-                            .with(
-                                    Sort.NullHandling.NULLS_LAST
-                            )
-            );
-
-        } else if ("AI_SCORE_ASC".equals(sortBy)) {
-
-            return Sort.by(
-                    Sort.Order
-                            .asc("aiScore")
-                            .with(
-                                    Sort.NullHandling.NULLS_LAST
-                            )
+                    Sort.Order.desc("aiScore")
+                            .with(Sort.NullHandling.NULLS_LAST)
             );
         }
 
-        return Sort.by(
-                Sort.Direction.DESC,
-                "appliedAt"
-        );
+        if ("AI_SCORE_ASC".equals(sortBy)) {
+            return Sort.by(
+                    Sort.Order.asc("aiScore")
+                            .with(Sort.NullHandling.NULLS_LAST)
+            );
+        }
+
+        return Sort.by(Sort.Direction.DESC, "appliedAt");
     }
 }
+

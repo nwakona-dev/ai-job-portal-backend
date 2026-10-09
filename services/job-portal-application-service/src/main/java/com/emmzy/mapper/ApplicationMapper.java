@@ -30,7 +30,7 @@ public class ApplicationMapper {
                 .coverLetter(req.getCoverLetter())
                 .expectedSalary(req.getExpectedSalary())
                 .availableFrom(req.getAvailableFrom())
-                .status(ApplicationStatus.PENDING)
+                .status(ApplicationStatus.APPLIED)
                 .isStarred(false)
                 .build();
     }

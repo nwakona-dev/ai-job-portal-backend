@@ -34,25 +34,55 @@ public class ApplicationServiceClient {
                     .get()
                     .uri("/api/applications")
                     .retrieve()
-                    .onStatus(
-                            HttpStatusCode::isError,
-                            (request, response) -> {
-                                throw new ExternalServiceException(
-                                        "Application Service returned an error "
-                                                + "while fetching applications"
-                                );
-                            }
-                    )
+                    .onStatus(HttpStatusCode::isError, (request, response) -> {
+                        throw new ExternalServiceException(
+                                "Application Service returned an error "
+                                        + "while fetching applications"
+                        );
+                    })
                     .body(new ParameterizedTypeReference<>() {});
 
             return applications != null ? applications : List.of();
 
         } catch (ExternalServiceException exception) {
             throw exception;
-
         } catch (RestClientException exception) {
             throw new ExternalServiceException(
                     "Unable to communicate with Application Service",
+                    exception
+            );
+        }
+    }
+
+    /**
+     * Retrieves applications for a specific job.
+     */
+    public List<Map<String, Object>> getApplicationsForJob(Long jobId) {
+        if (jobId == null) {
+            return List.of();
+        }
+
+        try {
+            List<Map<String, Object>> applications = restClient
+                    .get()
+                    .uri("/api/applications/job/{jobId}", jobId)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, (request, response) -> {
+                        throw new ExternalServiceException(
+                                "Application Service returned an error "
+                                        + "while fetching applications for job "
+                                        + jobId
+                        );
+                    })
+                    .body(new ParameterizedTypeReference<>() {});
+
+            return applications != null ? applications : List.of();
+
+        } catch (ExternalServiceException exception) {
+            throw exception;
+        } catch (RestClientException exception) {
+            throw new ExternalServiceException(
+                    "Unable to retrieve applications for job " + jobId,
                     exception
             );
         }
@@ -67,22 +97,18 @@ public class ApplicationServiceClient {
                     .get()
                     .uri("/api/applications/{applicationId}", applicationId)
                     .retrieve()
-                    .onStatus(
-                            HttpStatusCode::isError,
-                            (request, response) -> {
-                                throw new ExternalServiceException(
-                                        "Application Service returned an error while fetching application "
-                                                + applicationId
-                                );
-                            }
-                    )
+                    .onStatus(HttpStatusCode::isError, (request, response) -> {
+                        throw new ExternalServiceException(
+                                "Application Service returned an error while fetching application "
+                                        + applicationId
+                        );
+                    })
                     .body(new ParameterizedTypeReference<>() {});
 
             return application != null ? application : Map.of();
 
         } catch (ExternalServiceException exception) {
             throw exception;
-
         } catch (RestClientException exception) {
             throw new ExternalServiceException(
                     "Unable to retrieve application " + applicationId,
@@ -100,22 +126,18 @@ public class ApplicationServiceClient {
                     .get()
                     .uri("/api/applications/my")
                     .retrieve()
-                    .onStatus(
-                            HttpStatusCode::isError,
-                            (request, response) -> {
-                                throw new ExternalServiceException(
-                                        "Application Service returned an error "
-                                                + "while fetching candidate applications"
-                                );
-                            }
-                    )
+                    .onStatus(HttpStatusCode::isError, (request, response) -> {
+                        throw new ExternalServiceException(
+                                "Application Service returned an error "
+                                        + "while fetching candidate applications"
+                        );
+                    })
                     .body(new ParameterizedTypeReference<>() {});
 
             return applications != null ? applications : List.of();
 
         } catch (ExternalServiceException exception) {
             throw exception;
-
         } catch (RestClientException exception) {
             throw new ExternalServiceException(
                     "Unable to retrieve candidate applications",
@@ -133,22 +155,18 @@ public class ApplicationServiceClient {
                     .get()
                     .uri("/api/applications/company")
                     .retrieve()
-                    .onStatus(
-                            HttpStatusCode::isError,
-                            (request, response) -> {
-                                throw new ExternalServiceException(
-                                        "Application Service returned an error "
-                                                + "while fetching company applications"
-                                );
-                            }
-                    )
+                    .onStatus(HttpStatusCode::isError, (request, response) -> {
+                        throw new ExternalServiceException(
+                                "Application Service returned an error "
+                                        + "while fetching company applications"
+                        );
+                    })
                     .body(new ParameterizedTypeReference<>() {});
 
             return applications != null ? applications : List.of();
 
         } catch (ExternalServiceException exception) {
             throw exception;
-
         } catch (RestClientException exception) {
             throw new ExternalServiceException(
                     "Unable to retrieve company applications",
@@ -157,3 +175,4 @@ public class ApplicationServiceClient {
         }
     }
 }
+
